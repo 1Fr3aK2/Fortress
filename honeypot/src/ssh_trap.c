@@ -9,12 +9,12 @@ void err(char *msg)
     exit(1);
 }
 
-void send_Broadcast(int accepted)
+void send_Broadcast(int accepted, t_server *server)
 {
-    for (int fd = 0; fd <= maxfd; fd++)
+    for (int fd = 0; fd <= server->maxfd; fd++)
     {
-        if (FD_ISSET(fd, &write_set) && fd != accepted)
-            if (send(fd, send_buffer, strlen(send_buffer), 0) == -1)
+        if (FD_ISSET(fd, &server->write_set) && fd != accepted)
+            if (send(fd, server->send_buffer, strlen(server->send_buffer), 0) == -1)
                 err(NULL);
     }
 }
@@ -40,7 +40,7 @@ int setup_Server(int port)
     return (sockfd);
 }
 
-void handle_NewConnections(int sockfd)
+void handle_NewConnections(int sockfd, t_server *server)
 {
     struct sockaddr_in client;
     socklen_t len;
@@ -51,76 +51,65 @@ void handle_NewConnections(int sockfd)
     connfd = accept(sockfd, (struct sockaddr *)&client, &len);
     if (connfd < 0)
         err(NULL);
-    if (connfd > maxfd)
-        maxfd = connfd;
-    clients[connfd].id = current_id;
-    current_id++;
-    FD_SET(connfd, &current);
-    sprintf(send_buffer, "server: client %d just arrived\n", clients[connfd].id);
-    send_Broadcast(connfd);
+    if (connfd > server->maxfd)
+        server->maxfd = connfd;
+    server->clients[connfd].id = server->current_id;
+    server->current_id++;
+    FD_SET(connfd, &server->current);
+    sprintf(server->send_buffer, "server: client %d just arrived\n", server->clients[connfd].id);
+    send_Broadcast(connfd, server);
 }
 
-void handle_Clients(int fd)
+void handle_Clients(int fd, t_server *server)
 {
     int ret;
-    ret = recv(fd, recv_buffer, MAX_MSG_SIZE, 0);
+    ret = recv(fd, server->recv_buffer, MAX_MSG_SIZE, 0);
     if (ret <= 0)
     {
-        sprintf(send_buffer, "server: client %d just left\n", clients[fd].id);
-        send_Broadcast(fd);
-        FD_CLR(fd, &current);
+        sprintf(server->send_buffer, "server: client %d just left\n", server->clients[fd].id);
+        send_Broadcast(fd, server);
+        FD_CLR(fd, &server->current);
         close(fd);
     }
     else
-        handle_ClientMessage(fd, ret);
+        handle_ClientMessage(fd, ret, server);
 
 }
 
 
-void handle_ClientMessage(int fd, int ret)
+void handle_ClientMessage(int fd, int ret, t_server *server)
 {
-    for (int i = 0, j = ft_strlen(clients[fd].msg); i < ret; i++, j++)
+    for (int i = 0, j = ft_strlen(server->clients[fd].msg); i < ret; i++, j++)
     {
-        clients[fd].msg[j] = recv_buffer[i];
-        if (clients[fd].msg[j] == '\n')
+        server->clients[fd].msg[j] = server->recv_buffer[i];
+        if (server->clients[fd].msg[j] == '\n')
         {
-            clients[fd].msg[j] = '\0';
-            sprintf(send_buffer, "client %d: %s\n", clients[fd].id, clients[fd].msg);
-            send_Broadcast(fd);
-            ft_bzero(clients[fd].msg, ft_strlen(clients[fd].msg));
+            server->clients[fd].msg[j] = '\0';
+            sprintf(server->send_buffer, "client %d: %s\n", server->clients[fd].id, server->clients[fd].msg);
+            send_Broadcast(fd, server);
+            ft_bzero(server->clients[fd].msg, ft_strlen(server->clients[fd].msg));
             j = -1;
         }
     }
 }
 
-void run_Server(int sockfd)
+void run_Server(int sockfd, t_server *server)
 {
     while (1)
     {
-        read_set = write_set = current;
-        if (select(maxfd + 1, &read_set, &write_set, NULL, NULL) == -1)
+        server->read_set = server->write_set = server->current;
+        if (select(server->maxfd + 1, &server->read_set, &server->write_set, NULL, NULL) == -1)
             err(NULL);
-        for (int fd = 0; fd <= maxfd; fd++)
+        for (int fd = 0; fd <= server->maxfd; fd++)
         {
-            if (FD_ISSET(fd, &read_set))
+            if (FD_ISSET(fd, &server->read_set))
             {
                 if (fd == sockfd)
-                    handle_NewConnections(sockfd);
+                    handle_NewConnections(sockfd, server);
                 else
-                    handle_Clients(fd);
+                    handle_Clients(fd, server);
             }
         }
     }
 }
 
-int main()
-{    
-    int sockfd;
-
-    sockfd = setup_Server(2222);
-    FD_ZERO(&current);
-    FD_SET(sockfd, &current);
-    maxfd = sockfd;
-
-    run_Server(sockfd);
-}

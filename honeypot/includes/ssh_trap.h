@@ -22,28 +22,28 @@ typedef struct s_client
     char msg[MAX_MSG_SIZE];
 } t_client;
 
-t_client clients[MAX_CLIENTS];
+typedef struct s_server
+{
+    t_client clients[MAX_CLIENTS];
+    int maxfd;
+    int current_id;
+    char recv_buffer[MAX_MSG_SIZE];
+    char send_buffer[MAX_MSG_SIZE + 50]; 
+    fd_set write_set;
+    fd_set read_set;
+    fd_set current;
+} t_server;
 
 
-int maxfd = 0;
-int current_id = 0;
 
-char recv_buffer[MAX_MSG_SIZE];
-char send_buffer[MAX_MSG_SIZE + 50];
-
-fd_set write_set;
-fd_set read_set;
-fd_set current;
-
-
-//functions
-
+//ssh_trap.c
 void err(char *msg);
-void send_Broadcast(int accepted);
-
+void send_Broadcast(int accepted, t_server *server);
 int setup_Server(int port);
-void handle_NewConnections(int sockfd);
-void handle_Clients(int fd);
-void handle_ClientMessage(int fd, int ret);
-void run_Server(int sockfd);
+void handle_NewConnections(int sockfd, t_server *server);
+void handle_Clients(int fd, t_server *server);
+void handle_ClientMessage(int fd, int ret, t_server *server);
+void run_Server(int sockfd, t_server *server);
+
+
 #endif
