@@ -21,12 +21,16 @@ void send_Broadcast(int accepted, t_server *server)
 
 int setup_Server(int port)
 {
+    int opt;
     int sockfd;
     struct sockaddr_in servaddr;
 
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd == -1)
         err(NULL);
+    opt = 1;
+    setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    
     ft_bzero(&servaddr, sizeof(servaddr));
 
     servaddr.sin_family = AF_INET;
