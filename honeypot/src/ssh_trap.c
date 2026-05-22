@@ -61,6 +61,8 @@ void handle_NewConnections(int sockfd, t_server *server)
     server->current_id++;
     FD_SET(connfd, &server->current);
     sprintf(server->send_buffer, "server: client %d just arrived\n", server->clients[connfd].id);
+    if (send(connfd, SSH_BANNER, ft_strlen(SSH_BANNER), 0) == -1)
+        err(NULL);
     send_Broadcast(connfd, server);
 }
 

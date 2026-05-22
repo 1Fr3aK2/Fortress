@@ -15,6 +15,9 @@
 
 #define MAX_CLIENTS 1024
 #define MAX_MSG_SIZE 1000000
+#define SSH_BANNER "SSH-2.0-OpenSSH_8.9p1\r\n"
+
+
 
 typedef struct s_client
 {
