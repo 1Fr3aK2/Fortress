@@ -60,10 +60,10 @@ void handle_NewConnections(int sockfd, t_server *server)
     server->clients[connfd].id = server->current_id;
     server->current_id++;
     FD_SET(connfd, &server->current);
-    sprintf(server->send_buffer, "server: client %d just arrived\n", server->clients[connfd].id);
     if (send(connfd, SSH_BANNER, ft_strlen(SSH_BANNER), 0) == -1)
         err(NULL);
-    send_Broadcast(connfd, server);
+    inet_ntop(AF_INET, &client.sin_addr, server->clients[connfd].ip, sizeof(server->clients[connfd].ip));
+    server->clients[connfd].port = ntohs(client.sin_port);
 }
 
 void handle_Clients(int fd, t_server *server)
@@ -72,30 +72,32 @@ void handle_Clients(int fd, t_server *server)
     ret = recv(fd, server->recv_buffer, MAX_MSG_SIZE, 0);
     if (ret <= 0)
     {
-        sprintf(server->send_buffer, "server: client %d just left\n", server->clients[fd].id);
-        send_Broadcast(fd, server);
         FD_CLR(fd, &server->current);
         close(fd);
     }
     else
         handle_ClientMessage(fd, ret, server);
-
 }
 
 
 void handle_ClientMessage(int fd, int ret, t_server *server)
 {
-    for (int i = 0, j = ft_strlen(server->clients[fd].msg); i < ret; i++, j++)
+    for (int i = 0; i < ret; i++)
     {
-        server->clients[fd].msg[j] = server->recv_buffer[i];
-        if (server->clients[fd].msg[j] == '\n')
+        server->clients[fd].msg[server->clients[fd].msg_len] = server->recv_buffer[i];
+        if (server->clients[fd].msg[server->clients[fd].msg_len] == '\n')
         {
-            server->clients[fd].msg[j] = '\0';
-            sprintf(server->send_buffer, "client %d: %s\n", server->clients[fd].id, server->clients[fd].msg);
-            send_Broadcast(fd, server);
-            ft_bzero(server->clients[fd].msg, ft_strlen(server->clients[fd].msg));
-            j = -1;
+            server->clients[fd].msg[server->clients[fd].msg_len] = '\0';
+            if (server->clients[fd].msg_len > 0 && server->clients[fd].msg[server->clients[fd].msg_len - 1] == '\r')
+            {
+                server->clients[fd].msg[server->clients[fd].msg_len - 1] = '\0';
+                ft_strlcpy(server->clients[fd].client_version, server->clients[fd].msg, sizeof(server->clients[fd].client_version));
+            }
+            ft_bzero(server->clients[fd].msg, server->clients[fd].msg_len);
+            server->clients[fd].msg_len = 0;
         }
+        else
+            server->clients[fd].msg_len++;
     }
 }
 

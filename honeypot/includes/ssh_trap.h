@@ -11,6 +11,7 @@
 #include <string.h>
 #include <netdb.h>
 #include <netinet/in.h>
+ #include <arpa/inet.h>
 #include <../libraries/libft/libft.h>
 
 #define MAX_CLIENTS 1024
@@ -21,20 +22,24 @@
 
 typedef struct s_client
 {
-    int id;
-    char msg[MAX_MSG_SIZE];
+    int         id;
+    char        msg[MAX_MSG_SIZE];
+    char        client_version[256];
+    char        ip[16];
+    uint32_t    port;
+    long        msg_len;
 } t_client;
 
 typedef struct s_server
 {
-    t_client clients[MAX_CLIENTS];
-    int maxfd;
-    int current_id;
-    char recv_buffer[MAX_MSG_SIZE];
-    char send_buffer[MAX_MSG_SIZE + 50]; 
-    fd_set write_set;
-    fd_set read_set;
-    fd_set current;
+    t_client    clients[MAX_CLIENTS];
+    int         maxfd;
+    int         current_id;
+    char        recv_buffer[MAX_MSG_SIZE];
+    char        send_buffer[MAX_MSG_SIZE + 50]; 
+    fd_set      write_set;
+    fd_set      read_set;
+    fd_set      current;
 } t_server;
 
 
