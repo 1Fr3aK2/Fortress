@@ -24,11 +24,11 @@
 typedef struct s_client
 {
     int         id;
-    char        ip[INET_ADDRSTRLEN]; //change to *
+    char        ip[INET_ADDRSTRLEN];
     char        user[64];
     char        password[64];
-    char        client_version[256]; //change to *
-    char        msg[MAX_MSG_SIZE]; //change to * ?
+    char        client_version[256];
+    char        msg[MAX_MSG_SIZE];
     uint32_t    port;
     long        msg_len;
     time_t      timestamp;
@@ -50,7 +50,6 @@ typedef struct s_server
 
 //ssh_trap.c
 void err(char *msg);
-void send_Broadcast(int accepted, t_server *server);
 int setup_Server(int port);
 void handle_NewConnections(int sockfd, t_server *server);
 void handle_Clients(int fd, t_server *server);
