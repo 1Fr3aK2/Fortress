@@ -11,8 +11,9 @@
 #include <string.h>
 #include <netdb.h>
 #include <netinet/in.h>
- #include <arpa/inet.h>
+#include <arpa/inet.h>
 #include <../libraries/libft/libft.h>
+#include <time.h>
 
 #define MAX_CLIENTS 1024
 #define MAX_MSG_SIZE 1000000
@@ -23,11 +24,14 @@
 typedef struct s_client
 {
     int         id;
-    char        msg[MAX_MSG_SIZE];
-    char        client_version[256];
-    char        ip[16];
+    char        ip[INET_ADDRSTRLEN]; //change to *
+    char        user[64];
+    char        password[64];
+    char        client_version[256]; //change to *
+    char        msg[MAX_MSG_SIZE]; //change to * ?
     uint32_t    port;
     long        msg_len;
+    time_t      timestamp;
 } t_client;
 
 typedef struct s_server

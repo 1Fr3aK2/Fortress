@@ -34,7 +34,7 @@ int setup_Server(int port)
     ft_bzero(&servaddr, sizeof(servaddr));
 
     servaddr.sin_family = AF_INET;
-    servaddr.sin_addr.s_addr = INADDR_ANY;
+    servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
     servaddr.sin_port = htons(port);
 
     if ((bind(sockfd, (const struct sockaddr *)&servaddr, sizeof(servaddr))) != 0)
@@ -63,7 +63,9 @@ void handle_NewConnections(int sockfd, t_server *server)
     if (send(connfd, SSH_BANNER, ft_strlen(SSH_BANNER), 0) == -1)
         err(NULL);
     inet_ntop(AF_INET, &client.sin_addr, server->clients[connfd].ip, sizeof(server->clients[connfd].ip));
+    printf("ip: %s\n", server->clients[connfd].ip);
     server->clients[connfd].port = ntohs(client.sin_port);
+    server->clients[connfd].timestamp = time(NULL);
 }
 
 void handle_Clients(int fd, t_server *server)
