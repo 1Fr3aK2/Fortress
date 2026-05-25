@@ -18,7 +18,7 @@
 #define MAX_CLIENTS 1024
 #define MAX_MSG_SIZE 1000000
 #define SSH_BANNER "SSH-2.0-OpenSSH_8.9p1\r\n"
-
+#define MAX_EVENTS 64
 
 
 typedef struct s_client
@@ -37,13 +37,11 @@ typedef struct s_client
 typedef struct s_server
 {
     t_client    clients[MAX_CLIENTS];
-    int         maxfd;
     int         current_id;
+    int         epfd;
     char        recv_buffer[MAX_MSG_SIZE];
-    char        send_buffer[MAX_MSG_SIZE + 50]; 
-    fd_set      write_set;
-    fd_set      read_set;
-    fd_set      current;
+    char        send_buffer[MAX_MSG_SIZE + 50];
+
 } t_server;
 
 
