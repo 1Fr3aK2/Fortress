@@ -9,16 +9,6 @@ void err(char *msg)
     exit(1);
 }
 
-void send_Broadcast(int accepted, t_server *server)
-{
-    for (int fd = 0; fd <= server->maxfd; fd++)
-    {
-        if (FD_ISSET(fd, &server->write_set) && fd != accepted)
-            if (send(fd, server->send_buffer, strlen(server->send_buffer), 0) == -1)
-                err(NULL);
-    }
-}
-
 int setup_Server(int port)
 {
     int opt;
@@ -49,21 +39,22 @@ void handle_NewConnections(int sockfd, t_server *server)
     struct sockaddr_in client;
     socklen_t len;
     int connfd;
+    struct epoll_event  ev;
 
     ft_bzero(&client, sizeof(client));
     len = sizeof(client);
     connfd = accept(sockfd, (struct sockaddr *)&client, &len);
     if (connfd < 0)
         err(NULL);
-    if (connfd > server->maxfd)
-        server->maxfd = connfd;
+    ev.events = EPOLLIN;
+    ev.data.fd = connfd;
+    if (epoll_ctl(server->epfd, EPOLL_CTL_ADD, connfd, &ev) == -1)
+        err("epoll_ctl() error\n");
     server->clients[connfd].id = server->current_id;
     server->current_id++;
-    FD_SET(connfd, &server->current);
     if (send(connfd, SSH_BANNER, ft_strlen(SSH_BANNER), 0) == -1)
         err(NULL);
     inet_ntop(AF_INET, &client.sin_addr, server->clients[connfd].ip, sizeof(server->clients[connfd].ip));
-    printf("ip: %s\n", server->clients[connfd].ip);
     server->clients[connfd].port = ntohs(client.sin_port);
     server->clients[connfd].timestamp = time(NULL);
 }
@@ -74,7 +65,8 @@ void handle_Clients(int fd, t_server *server)
     ret = recv(fd, server->recv_buffer, MAX_MSG_SIZE, 0);
     if (ret <= 0)
     {
-        FD_CLR(fd, &server->current);
+        if (epoll_ctl(server->epfd, EPOLL_CTL_DEL, fd, NULL) == -1)
+            err("epoll_ctl() error\n");
         close(fd);
     }
     else
@@ -105,21 +97,21 @@ void handle_ClientMessage(int fd, int ret, t_server *server)
 
 void run_Server(int sockfd, t_server *server)
 {
+    struct epoll_event events[MAX_EVENTS];
+    int n;
+
     while (1)
     {
-        server->read_set = server->write_set = server->current;
-        if (select(server->maxfd + 1, &server->read_set, &server->write_set, NULL, NULL) == -1)
-            err(NULL);
-        for (int fd = 0; fd <= server->maxfd; fd++)
+        n = epoll_wait(server->epfd, events, MAX_EVENTS, -1);
+        if (n == -1)
+            err(NULL); 
+        for (int i = 0; i < n; i++)
         {
-            if (FD_ISSET(fd, &server->read_set))
-            {
-                if (fd == sockfd)
-                    handle_NewConnections(sockfd, server);
-                else
-                    handle_Clients(fd, server);
+            if (events[i].data.fd == sockfd)
+                handle_NewConnections(sockfd, server);
+            else
+                handle_Clients(events[i].data.fd, server);
             }
         }
-    }
 }
 
