@@ -1,4 +1,5 @@
 #include <ssh_trap.h>
+#include <logger.h>
 
 void err(char *msg)
 {
@@ -34,65 +35,97 @@ int setup_Server(int port)
     return (sockfd);
 }
 
+
+void handle_childProcess(t_server *server, int connfd)
+{
+    ssh_session session;
+    ssh_message message;
+
+    close(server->epfd);
+    close(server->sockfd);
+    session = ssh_new();
+    if (!session)
+        err("ssh_new() error\n");
+    if (ssh_bind_accept_fd(server->sshBind, session, connfd) == SSH_ERROR)
+    {
+        ssh_disconnect(session);
+        ssh_free(session);
+        ssh_bind_free(server->sshBind);
+        free(server);
+        close(connfd);
+        err("ssh_bind_accept_fd() error\n");
+    }
+    if (ssh_handle_key_exchange(session) != SSH_OK)
+    {
+        ssh_disconnect(session);
+        ssh_free(session);
+        ssh_bind_free(server->sshBind);
+        free(server);
+        close(connfd);
+        err("ssh_handle_key_exchange() error\n");
+    }
+    ft_strlcpy(server->clients[connfd].client_version, ssh_get_clientbanner(session), sizeof(server->clients[connfd].client_version));
+    while ((message = ssh_message_get(session)))
+    {
+        if (ssh_message_type(message) == SSH_REQUEST_AUTH && ssh_message_subtype(message) == SSH_AUTH_METHOD_PASSWORD)
+        {
+            printf("User: %s\n", ssh_message_auth_user(message));
+            printf("Password: %s\n", ssh_message_auth_password(message));
+            log_event(&server->clients[connfd], ssh_message_auth_user(message), ssh_message_auth_password(message));
+            ssh_message_reply_default(message);
+            ssh_message_free(message);
+        }
+        else
+        {
+            ssh_message_reply_default(message);
+            ssh_message_free(message);
+        }
+    }
+    ssh_disconnect(session);
+    ssh_free(session);
+    ssh_bind_free(server->sshBind);
+    free(server);
+    close(connfd);
+    exit(0);
+}
+
+
+void handle_sshSesion(t_server *server, int connfd)
+{
+    pid_t pid;
+
+    pid = fork();
+    if (pid == -1)
+        err("Process error\n");
+    else if (pid == 0)
+        handle_childProcess(server, connfd);
+    else
+    {
+        int status = 0;
+        if (waitpid(pid, &status, WNOHANG) == -1)
+            err("waitpid() error\n");
+        close(connfd);
+        return ;
+    }
+}
+
 void handle_NewConnections(int sockfd, t_server *server)
 {
     struct sockaddr_in client;
     socklen_t len;
     int connfd;
-    struct epoll_event  ev;
 
     ft_bzero(&client, sizeof(client));
     len = sizeof(client);
     connfd = accept(sockfd, (struct sockaddr *)&client, &len);
     if (connfd < 0)
         err(NULL);
-    ev.events = EPOLLIN;
-    ev.data.fd = connfd;
-    if (epoll_ctl(server->epfd, EPOLL_CTL_ADD, connfd, &ev) == -1)
-        err("epoll_ctl() error\n");
     server->clients[connfd].id = server->current_id;
     server->current_id++;
-    if (send(connfd, SSH_BANNER, ft_strlen(SSH_BANNER), 0) == -1)
-        err(NULL);
     inet_ntop(AF_INET, &client.sin_addr, server->clients[connfd].ip, sizeof(server->clients[connfd].ip));
     server->clients[connfd].port = ntohs(client.sin_port);
     server->clients[connfd].timestamp = time(NULL);
-}
-
-void handle_Clients(int fd, t_server *server)
-{
-    int ret;
-    ret = recv(fd, server->recv_buffer, MAX_MSG_SIZE, 0);
-    if (ret <= 0)
-    {
-        if (epoll_ctl(server->epfd, EPOLL_CTL_DEL, fd, NULL) == -1)
-            err("epoll_ctl() error\n");
-        close(fd);
-    }
-    else
-        handle_ClientMessage(fd, ret, server);
-}
-
-
-void handle_ClientMessage(int fd, int ret, t_server *server)
-{
-    for (int i = 0; i < ret; i++)
-    {
-        server->clients[fd].msg[server->clients[fd].msg_len] = server->recv_buffer[i];
-        if (server->clients[fd].msg[server->clients[fd].msg_len] == '\n')
-        {
-            server->clients[fd].msg[server->clients[fd].msg_len] = '\0';
-            if (server->clients[fd].msg_len > 0 && server->clients[fd].msg[server->clients[fd].msg_len - 1] == '\r')
-            {
-                server->clients[fd].msg[server->clients[fd].msg_len - 1] = '\0';
-                ft_strlcpy(server->clients[fd].client_version, server->clients[fd].msg, sizeof(server->clients[fd].client_version));
-            }
-            ft_bzero(server->clients[fd].msg, server->clients[fd].msg_len);
-            server->clients[fd].msg_len = 0;
-        }
-        else
-            server->clients[fd].msg_len++;
-    }
+    handle_sshSesion(server, connfd);
 }
 
 void run_Server(int sockfd, t_server *server)
@@ -109,9 +142,7 @@ void run_Server(int sockfd, t_server *server)
         {
             if (events[i].data.fd == sockfd)
                 handle_NewConnections(sockfd, server);
-            else
-                handle_Clients(events[i].data.fd, server);
-            }
         }
+    }
 }
 
