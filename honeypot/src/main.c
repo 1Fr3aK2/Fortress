@@ -2,36 +2,29 @@
 
 volatile sig_atomic_t g_running = 1;
 
-void close_fds()
-{
-    int i = 3;
-    while (i <= FOPEN_MAX)
-    {
-        close(i);
-        i++;
-    }
-}
-
-static void handle_SIGCHLD(int sig)
-{
-    (void)sig;
-    while (waitpid(-1, NULL, WNOHANG) > 0)
-        ;
-}
-
-static void handle_SIGINT(int sig)
-{
-    (void)sig;
-    g_running = 0;
-}
-
 int main()
 {   
     t_server *server;
     struct epoll_event ev;
     
-    signal(SIGINT, handle_SIGINT);
-    signal(SIGCHLD, handle_SIGCHLD);
+    struct sigaction sa_chld;
+    struct sigaction sa_int;
+
+    ft_memset(&sa_chld, 0, sizeof(sa_chld));
+    sa_chld.sa_handler = handle_SIGCHLD;
+    sigemptyset(&sa_chld.sa_mask);
+
+    sa_chld.sa_flags = SA_RESTART | SA_NOCLDSTOP; 
+    if (sigaction(SIGCHLD, &sa_chld, NULL) == -1)
+        err("sigaction SIGCHLD error\n", NULL);
+
+    ft_memset(&sa_int, 0, sizeof(sa_int));
+    sa_int.sa_handler = handle_SIGINT;
+    sigemptyset(&sa_int.sa_mask);
+    sa_int.sa_flags = 0;
+
+    if (sigaction(SIGINT, &sa_int, NULL) == -1)
+        err("sigaction SIGINT error\n", NULL);
     server = ft_calloc(1, sizeof(t_server));
     if (!server)
         err(NULL, server);

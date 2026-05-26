@@ -6,6 +6,7 @@ SRCS = \
 	src/logger.c \
 	src/main.c \
 	src/ssh_trap.c \
+	src/utils.c \
 
 OBJ_DIR = obj
 OBJS = $(SRCS:src/%.c=$(OBJ_DIR)/%.o)

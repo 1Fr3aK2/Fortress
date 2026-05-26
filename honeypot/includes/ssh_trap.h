@@ -54,6 +54,10 @@ void handle_NewConnections(int sockfd, t_server *server);
 void run_Server(int sockfd, t_server *server);
 void handle_sshSesion(t_server *server, int connfd);
 void handle_childProcess(t_server *server, int connfd);
+
+//utils.c
+void handle_SIGINT(int sig);
+void handle_SIGCHLD(int sig);
 void close_fds();
 
 #endif
