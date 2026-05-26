@@ -13,6 +13,7 @@ OBJS = $(SRCS:src/%.c=$(OBJ_DIR)/%.o)
 LIBFT_DIR = ./libraries/libft
 LIBFT = $(LIBFT_DIR)/libft.a
 
+LIBSSH = -lssh
 
 RESET   = \033[0m
 GREEN   = \033[32m
@@ -24,7 +25,7 @@ all: $(NAME)
 
 $(NAME): $(OBJS) $(LIBFT)
 	@echo "$(YELLOW)compiling $(NAME)...$(RESET)"
-	@$(CC) $(CFLAGS) -o $(NAME) $(OBJS) $(LIBFT)
+	@$(CC) $(CFLAGS) -o $(NAME) $(OBJS) $(LIBFT) $(LIBSSH)
 	@echo "$(GREEN)$(NAME) ready!$(RESET)"
 
 $(OBJ_DIR)/%.o: src/%.c

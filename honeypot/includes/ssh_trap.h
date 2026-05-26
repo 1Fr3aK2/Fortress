@@ -15,10 +15,11 @@
 #include <time.h>
 #include <libssh/libssh.h>
 #include <libssh/server.h>
+#include <sys/wait.h>
+#include <sys/types.h>
 
 #define MAX_CLIENTS 1024
-#define MAX_MSG_SIZE 1000000
-#define SSH_BANNER "SSH-2.0-OpenSSH_8.9p1\r\n"
+#define SSH_BANNER "OpenSSH_8.9p1\r\n"
 #define MAX_EVENTS 64
 
 
@@ -26,13 +27,9 @@ typedef struct s_client
 {
     int         id;
     char        ip[INET_ADDRSTRLEN];
-    char        user[64];
-    char        password[64];
-    char        client_version[256];
-    char        msg[MAX_MSG_SIZE];
     uint32_t    port;
-    long        msg_len;
     time_t      timestamp;
+    char        client_version[256];
 } t_client;
 
 typedef struct s_server
@@ -40,8 +37,7 @@ typedef struct s_server
     t_client    clients[MAX_CLIENTS];
     int         current_id;
     int         epfd;
-    char        recv_buffer[MAX_MSG_SIZE];
-    char        send_buffer[MAX_MSG_SIZE + 50];
+    int         sockfd;
     ssh_bind    sshBind;
 } t_server;
 
@@ -51,9 +47,9 @@ typedef struct s_server
 void err(char *msg);
 int setup_Server(int port);
 void handle_NewConnections(int sockfd, t_server *server);
-void handle_Clients(int fd, t_server *server);
-void handle_ClientMessage(int fd, int ret, t_server *server);
 void run_Server(int sockfd, t_server *server);
+void handle_sshSesion(t_server *server, int connfd);
+void handle_childProcess(t_server *server, int connfd);
 
 
 #endif
