@@ -17,6 +17,8 @@
 #include <libssh/server.h>
 #include <sys/wait.h>
 #include <sys/types.h>
+#include <signal.h>
+#include <stdbool.h>
 
 #define MAX_CLIENTS 1024
 #define SSH_BANNER "OpenSSH_8.9p1\r\n"
@@ -44,12 +46,12 @@ typedef struct s_server
 
 
 //ssh_trap.c
-void err(char *msg);
+void err(char *msg, t_server *server);
 int setup_Server(int port);
 void handle_NewConnections(int sockfd, t_server *server);
 void run_Server(int sockfd, t_server *server);
 void handle_sshSesion(t_server *server, int connfd);
 void handle_childProcess(t_server *server, int connfd);
-
+void close_fds();
 
 #endif

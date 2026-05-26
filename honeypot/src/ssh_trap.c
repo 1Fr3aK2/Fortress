@@ -1,12 +1,19 @@
 #include <ssh_trap.h>
 #include <logger.h>
 
-void err(char *msg)
+void err(char *msg, t_server *server)
 {
     if (!msg)
         ft_putstr_fd("Fatal error\n", 2);
     else
         ft_putstr_fd(msg, 2);
+    close_fds();
+    if (server)
+    {
+        if (server->sshBind)
+            ssh_bind_free(server->sshBind);
+        free(server);
+    }
     exit(1);
 }
 
@@ -18,7 +25,10 @@ int setup_Server(int port)
 
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd == -1)
-        err(NULL);
+    {
+        perror("socket() errorn\n");
+        return (-1);
+    }
     opt = 1;
     setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
     
@@ -29,9 +39,15 @@ int setup_Server(int port)
     servaddr.sin_port = htons(port);
 
     if ((bind(sockfd, (const struct sockaddr *)&servaddr, sizeof(servaddr))) != 0)
-        err(NULL);
+    {
+        perror("bind() error\n");
+        return (-1);
+    }
     if (listen(sockfd, 10) != 0)
-        err(NULL);
+    {
+        perror("listen() error\n");
+        return (-1);
+    }
     return (sockfd);
 }
 
@@ -45,24 +61,23 @@ void handle_childProcess(t_server *server, int connfd)
     close(server->sockfd);
     session = ssh_new();
     if (!session)
-        err("ssh_new() error\n");
+    {
+        close(connfd);
+        err("ssh_new() error\n", server);
+    }
     if (ssh_bind_accept_fd(server->sshBind, session, connfd) == SSH_ERROR)
     {
         ssh_disconnect(session);
         ssh_free(session);
-        ssh_bind_free(server->sshBind);
-        free(server);
         close(connfd);
-        err("ssh_bind_accept_fd() error\n");
+        err("ssh_bind_accept_fd() error\n", server);
     }
     if (ssh_handle_key_exchange(session) != SSH_OK)
     {
         ssh_disconnect(session);
         ssh_free(session);
-        ssh_bind_free(server->sshBind);
-        free(server);
         close(connfd);
-        err("ssh_handle_key_exchange() error\n");
+        err("ssh_handle_key_exchange() error\n", server);
     }
     ft_strlcpy(server->clients[connfd].client_version, ssh_get_clientbanner(session), sizeof(server->clients[connfd].client_version));
     while ((message = ssh_message_get(session)))
@@ -71,7 +86,12 @@ void handle_childProcess(t_server *server, int connfd)
         {
             printf("User: %s\n", ssh_message_auth_user(message));
             printf("Password: %s\n", ssh_message_auth_password(message));
-            log_event(&server->clients[connfd], ssh_message_auth_user(message), ssh_message_auth_password(message));
+            if (!log_event(&server->clients[connfd], ssh_message_auth_user(message), ssh_message_auth_password(message)))
+            {
+                ssh_disconnect(session);
+                ssh_free(session);
+                err("log_events() error\n", server);
+            }
             ssh_message_reply_default(message);
             ssh_message_free(message);
         }
@@ -96,14 +116,20 @@ void handle_sshSesion(t_server *server, int connfd)
 
     pid = fork();
     if (pid == -1)
-        err("Process error\n");
+    {
+        close(connfd);
+        err("Process error\n", server);
+    }
     else if (pid == 0)
         handle_childProcess(server, connfd);
     else
     {
         int status = 0;
         if (waitpid(pid, &status, WNOHANG) == -1)
-            err("waitpid() error\n");
+        {
+            close(connfd);
+            err("waitpid() error\n", server);
+        }
         close(connfd);
         return ;
     }
@@ -119,7 +145,10 @@ void handle_NewConnections(int sockfd, t_server *server)
     len = sizeof(client);
     connfd = accept(sockfd, (struct sockaddr *)&client, &len);
     if (connfd < 0)
-        err(NULL);
+    {
+        close(connfd);
+        err("accept() error\n", server);
+    }
     server->clients[connfd].id = server->current_id;
     server->current_id++;
     inet_ntop(AF_INET, &client.sin_addr, server->clients[connfd].ip, sizeof(server->clients[connfd].ip));
@@ -137,7 +166,7 @@ void run_Server(int sockfd, t_server *server)
     {
         n = epoll_wait(server->epfd, events, MAX_EVENTS, -1);
         if (n == -1)
-            err(NULL); 
+            err("epoll_wait() error\n", server);
         for (int i = 0; i < n; i++)
         {
             if (events[i].data.fd == sockfd)
