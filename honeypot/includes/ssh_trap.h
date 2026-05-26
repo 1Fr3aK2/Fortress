@@ -24,6 +24,8 @@
 #define SSH_BANNER "OpenSSH_8.9p1\r\n"
 #define MAX_EVENTS 64
 
+extern volatile sig_atomic_t g_running;
+
 
 typedef struct s_client
 {

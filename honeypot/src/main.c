@@ -1,5 +1,7 @@
 #include <ssh_trap.h>
 
+volatile sig_atomic_t g_running = 1;
+
 void close_fds()
 {
     int i = 3;
@@ -10,11 +12,17 @@ void close_fds()
     }
 }
 
+static void handle_SIGCHLD(int sig)
+{
+    (void)sig;
+    while (waitpid(-1, NULL, WNOHANG) > 0)
+        ;
+}
 
 static void handle_SIGINT(int sig)
 {
     (void)sig;
-    close_fds();
+    g_running = 0;
 }
 
 int main()
@@ -23,6 +31,7 @@ int main()
     struct epoll_event ev;
     
     signal(SIGINT, handle_SIGINT);
+    signal(SIGCHLD, handle_SIGCHLD);
     server = ft_calloc(1, sizeof(t_server));
     if (!server)
         err(NULL, server);
@@ -41,6 +50,10 @@ int main()
         err("ssh_bind_new() error\n", server);
     ssh_bind_options_set(server->sshBind, SSH_BIND_OPTIONS_RSAKEY, "/etc/fortress/keys/ssh_host_rsa_key");
     run_Server(server->sockfd, server);
+
+    close(server->sockfd);
+    close(server->epfd);
     ssh_bind_free(server->sshBind);
     free(server);
+
 }
