@@ -6,7 +6,6 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <sys/socket.h>
-#include <sys/select.h>
 #include <sys/epoll.h>
 #include <string.h>
 #include <netdb.h>
@@ -14,6 +13,8 @@
 #include <arpa/inet.h>
 #include <../libraries/libft/libft.h>
 #include <time.h>
+#include <libssh/libssh.h>
+#include <libssh/server.h>
 
 #define MAX_CLIENTS 1024
 #define MAX_MSG_SIZE 1000000
@@ -41,7 +42,7 @@ typedef struct s_server
     int         epfd;
     char        recv_buffer[MAX_MSG_SIZE];
     char        send_buffer[MAX_MSG_SIZE + 50];
-
+    ssh_bind    sshBind;
 } t_server;
 
 
