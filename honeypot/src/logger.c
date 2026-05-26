@@ -13,7 +13,7 @@ bool log_event(t_client *client, const char *user, const char *password)
     fd = open("/var/log/fortress/events/events.json", O_WRONLY | O_CREAT | O_APPEND, 0644);
     if (fd == -1)
     {
-        perror("open() error\n");
+        ft_putstr_fd("open() error\n", 2);
         return (false);
     }
     write(fd, buff, ft_strlen(buff));

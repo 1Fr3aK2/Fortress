@@ -26,7 +26,7 @@ int setup_Server(int port)
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd == -1)
     {
-        perror("socket() errorn\n");
+        ft_putstr_fd("socket() errorn\n", 2);
         return (-1);
     }
     opt = 1;
@@ -40,12 +40,12 @@ int setup_Server(int port)
 
     if ((bind(sockfd, (const struct sockaddr *)&servaddr, sizeof(servaddr))) != 0)
     {
-        perror("bind() error\n");
+        ft_putstr_fd("bind() error\n", 2);
         return (-1);
     }
     if (listen(sockfd, 10) != 0)
     {
-        perror("listen() error\n");
+        ft_putstr_fd("listen() error\n", 2);
         return (-1);
     }
     return (sockfd);
@@ -118,18 +118,13 @@ void handle_sshSesion(t_server *server, int connfd)
     if (pid == -1)
     {
         close(connfd);
-        err("Process error\n", server);
+        ft_putstr_fd("Process error\n", 2);
+        return ;
     }
     else if (pid == 0)
         handle_childProcess(server, connfd);
     else
     {
-        int status = 0;
-        if (waitpid(pid, &status, WNOHANG) == -1)
-        {
-            close(connfd);
-            err("waitpid() error\n", server);
-        }
         close(connfd);
         return ;
     }
@@ -147,7 +142,14 @@ void handle_NewConnections(int sockfd, t_server *server)
     if (connfd < 0)
     {
         close(connfd);
-        err("accept() error\n", server);
+        ft_putstr_fd("accept() error\n", 2);
+        return ;
+    }
+    if (connfd >= MAX_CLIENTS)
+    {
+        ft_putstr_fd("Warning: connection refused, connfd exceeds MAX_CLIENTS\n", 2);
+        close(connfd);
+        return;
     }
     server->clients[connfd].id = server->current_id;
     server->current_id++;
@@ -162,11 +164,19 @@ void run_Server(int sockfd, t_server *server)
     struct epoll_event events[MAX_EVENTS];
     int n;
 
-    while (1)
+    while (g_running)
     {
         n = epoll_wait(server->epfd, events, MAX_EVENTS, -1);
         if (n == -1)
+        {
+            if (errno == EINTR)
+            {
+                if (g_running == 0)
+                    break;
+                continue;
+            }
             err("epoll_wait() error\n", server);
+        }
         for (int i = 0; i < n; i++)
         {
             if (events[i].data.fd == sockfd)
