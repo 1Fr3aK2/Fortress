@@ -1,0 +1,7 @@
+.dockerignore
+.git
+Fortress
+Dockerfile
+*.o
+*.a
+.gitignore
