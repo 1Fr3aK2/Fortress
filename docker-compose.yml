@@ -1,0 +1,23 @@
+services:
+
+  honeypot:
+    container_name: honeypot
+    build:
+      context: ./honeypot
+      dockerfile: Dockerfile
+    image: honeypot:fortress
+    ports:
+      - "2222:2222"
+    networks:
+      - fortress
+    volumes:
+      - ./logs:/var/log/fortress/events
+      - ./keys:/etc/fortress/keys:ro
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+
+networks:
+  fortress:
+    driver: bridge
