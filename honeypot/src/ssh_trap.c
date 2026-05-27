@@ -84,8 +84,6 @@ void handle_childProcess(t_server *server, int connfd)
     {
         if (ssh_message_type(message) == SSH_REQUEST_AUTH && ssh_message_subtype(message) == SSH_AUTH_METHOD_PASSWORD)
         {
-            printf("User: %s\n", ssh_message_auth_user(message));
-            printf("Password: %s\n", ssh_message_auth_password(message));
             if (!log_event(&server->clients[connfd], ssh_message_auth_user(message), ssh_message_auth_password(message)))
             {
                 ssh_disconnect(session);
