@@ -1,6 +1,6 @@
 NAME = Fortress
 CC = cc
-CFLAGS = -Wall -Wextra -Werror -g -I./includes
+CFLAGS = -Wall -Wextra -Werror -g -I./includes -Wno-deprecated-declarations
 
 SRCS = \
 	src/logger.c \
