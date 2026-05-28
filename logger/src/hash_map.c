@@ -22,18 +22,42 @@ char *extract_key(char *line)
     return (key);
 }
 
+char *extract_value(char *line)
+{
+    char *key;
+    char *start;
+    char *end;
+    size_t len;
+
+    start = ft_strchr(line, ':');
+    if (!start)
+        return (NULL);
+    start = ft_strchr(start, '"');
+    if (!start)
+        return (NULL);
+    start++;
+    end = ft_strchr(start, '"');
+    if (!end)
+        return (NULL);
+    len = end - start;
+    key = (char *)malloc(len + 1);
+    if (!key)
+        return (NULL);
+    ft_strlcpy(key, start, len + 1);
+    return (key);
+}
 
 void parse_line(char *line)
 {
-    char ip[INET_ADDRSTRLEN];
-    char password[256];
+    /* char ip[INET_ADDRSTRLEN];
+    char password[256]; */
     char *key;
 
     key = extract_key(line);
     if (!key)
         return ;
     if (ft_strncmp(key, "ip", ft_strlen(key)) == 0)
-        printf("TRUE\n");
+        extract_value(line);
     else
         printf("FALSE");
     return ;

@@ -15,20 +15,7 @@
     close(fd);
     free(hash_map);
 } */
-/* void find_ip(char *line)
-{
 
-        if (ft_strncmp("\"ip\": ", line, ft_strlen("\"ip\": ")) == 0)
-        {
-            printf("TRUEE\n");
-            return ;
-        }
-        else
-        {
-            printf("FALSE\n");
-            return ;
-        }
-} */
 
 
 int main()
