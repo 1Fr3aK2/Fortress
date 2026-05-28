@@ -21,7 +21,11 @@ typedef struct s_hashmap
     int             size;
 }   t_hashmap;
 
-unsigned long hash(char *line);
-
+char *extract_key(char *line);
+char *extract_value(char *line);
+void parse_line(char *line, t_entry *bucket);
+void hashmap_insert(t_hashmap *hashmap, t_entry *node);
+unsigned long hash(char *ip, char *password);
+void free_hashmap(t_hashmap *hashmap);
 
 #endif

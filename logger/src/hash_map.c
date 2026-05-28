@@ -47,51 +47,100 @@ char *extract_value(char *line)
     return (key);
 }
 
-void parse_line(char *line)
+void parse_line(char *line, t_entry *bucket)
 {
-    /* char ip[INET_ADDRSTRLEN];
-    char password[256]; */
     char *key;
-
+    char *value;
+    
     key = extract_key(line);
     if (!key)
         return ;
+    value = extract_value(line);
+    if (!value)
+    {
+        free(key);
+        return ;
+    }
     if (ft_strncmp(key, "ip", ft_strlen(key)) == 0)
-        extract_value(line);
-    else
-        printf("FALSE");
+        ft_strlcpy(bucket->ip, value, sizeof(bucket->ip));
+    else if (ft_strncmp(key, "password", ft_strlen(key)) == 0)
+        ft_strlcpy(bucket->password, value, sizeof(bucket->password));
+    free(value);
+    free(key);
     return ;
 }
 
 
-void hashmap_insert(t_hashmap *hashmap, char *line)
+void hashmap_insert(t_hashmap *hashmap, t_entry *entry)
 {
     unsigned long index;
+    t_entry *new_node;
+    t_entry *curr;
 
-    index = hash(line);
-    if (!hashmap->buckets[index])
+    index = hash(entry->ip, entry->password);
+    curr = hashmap->buckets[index];
+    while (curr)
     {
-        hashmap->buckets[index]->count++;
-        parse_line();
-    }
-    else
-    {
-        hashmap->buckets[index]->count++;
-        hashmap->buckets[index]->next = ft_calloc(1, sizeof(t_hashmap));
-        if (!hashmap->buckets[index]->next)
+        if ((ft_strncmp(curr->ip, entry->ip, sizeof(curr->ip)) == 0) && (ft_strncmp(curr->password, entry->password, sizeof(curr->password)) == 0))
+        {
+            curr->count++;
             return ;
-        parse_line();
+        }
+        if (!curr->next)
+            break;
+        curr = curr->next;
     }
+    new_node = ft_calloc(1, sizeof(t_entry));
+    if (!new_node)
+        return ;
+    ft_strlcpy(new_node->ip, entry->ip, sizeof(new_node->ip));
+    ft_strlcpy(new_node->password, entry->password, sizeof(new_node->password));
+    new_node->count++;
+    if (!hashmap->buckets[index])
+        hashmap->buckets[index] = new_node;
+    else
+        curr->next = new_node;
+    hashmap->size++;
 }
 
-unsigned long hash(char *line)
+
+unsigned long hash(char *ip, char *password)
 {
+    char *str;
     unsigned long number = 0;
-    while(*line)
+    str = ip;
+    while(*str)
     {
-        number = (number * 31) + *line;
-        line++;
+        number = (number * 31) + *str;
+        str++;
+    }
+    str = password;
+    while (*str)
+    {
+        number = (number * 31) + *str;
+        str++;
     }
     number %= 256;
     return(number);
+}
+
+void free_hashmap(t_hashmap *hashmap)
+{
+    t_entry *tmp;
+    t_entry *curr;
+    int i;
+    i = 0;
+    while(i < 256)
+    {
+        curr = hashmap->buckets[i]; 
+        while(curr)
+        {
+            tmp = curr->next;
+            if (curr)
+                free(curr);
+            curr = tmp;
+        }
+        i++;
+    }
+    free(hashmap);
 }
