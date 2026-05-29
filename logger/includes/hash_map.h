@@ -8,9 +8,8 @@
 
 typedef struct s_entry
 {
-    char    password[256];
+    char    key[256];
     int     count;
-    char    ip[INET_ADDRSTRLEN];
     struct s_entry *next;
 }   t_entry;
 
@@ -25,7 +24,7 @@ char *extract_key(char *line);
 char *extract_value(char *line);
 void parse_line(char *line, t_entry *bucket);
 void hashmap_insert(t_hashmap *hashmap, t_entry *node);
-unsigned long hash(char *ip, char *password);
+unsigned long hash(char *key);
 void free_hashmap(t_hashmap *hashmap);
 
 #endif

@@ -6,6 +6,7 @@ SRCS = \
 	src/hash_map.c \
 	src/main.c \
 	src/stats_writer.c \
+	src/algorithm/heap_sort.c \
 
 OBJ_DIR = obj
 OBJS = $(SRCS:src/%.c=$(OBJ_DIR)/%.o)

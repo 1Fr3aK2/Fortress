@@ -2,23 +2,36 @@
 #include <hash_map.h>
 
 
-void parse_file(int fd, t_hashmap *hashmap)
+void parse_file(int fd, t_hashmap *password_map,t_hashmap *ip_map)
 {
-    char *line;
     t_entry temp;
+    char *line;
+    char *key;
 
     while((line = get_next_line(fd)))
     {
-        printf("line: %s\n", line);
         if (ft_strchr(line, '{'))
             ft_bzero(&temp, sizeof(temp));
-        else if (ft_strchr(line, '}'))
-        {
-            if (temp.ip[0] != '\0' && temp.password[0] != '\0')
-                hashmap_insert(hashmap, &temp);
-        }
         else
-            parse_line(line, &temp);    
+        {
+            key = extract_key(line);
+            if (!key)
+            {
+                free(line);
+                continue ;    
+            }
+            if (ft_strncmp(key, "ip", ft_strlen(key)) == 0)
+            {
+                parse_line(line, &temp);
+                hashmap_insert(ip_map, &temp);
+            }
+            else if (ft_strncmp(key, "password", ft_strlen(key)) == 0)
+            {
+                parse_line(line, &temp);
+                hashmap_insert(password_map, &temp);
+            }
+            free(key);
+        }
         free(line);
     }
 }
