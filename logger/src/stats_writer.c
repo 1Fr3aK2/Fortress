@@ -2,7 +2,22 @@
 #include <hash_map.h>
 
 
-void parse_file(int fd, t_hashmap *password_map,t_hashmap *ip_map)
+void fill_stats(t_entry *node, t_stats *stats)
+{
+    struct tm tm_info;
+    ft_bzero(&tm_info, sizeof(tm_info));
+    strptime(node->key, "%Y-%m-%dT%H:%M:%SZ", &tm_info);
+    time_t event_time = mktime(&tm_info);
+    time_t now = time(NULL);
+    double diff = difftime(now, event_time);
+    if (diff < 3600)
+        stats->last_1h++;
+    else if (diff < 86400)
+        stats->last_24h++;
+    stats->total++;
+}
+
+void parse_file(int fd, t_hashmap *password_map,t_hashmap *ip_map, t_stats *stats)
 {
     t_entry temp;
     char *line;
@@ -29,6 +44,11 @@ void parse_file(int fd, t_hashmap *password_map,t_hashmap *ip_map)
             {
                 parse_line(line, &temp);
                 hashmap_insert(password_map, &temp);
+            }
+            else if (ft_strncmp(key, "timestamp", ft_strlen(key)) == 0)
+            {
+                parse_line(line, &temp);
+                fill_stats(&temp, stats);              
             }
             free(key);
         }

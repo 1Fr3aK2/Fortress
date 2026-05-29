@@ -40,6 +40,7 @@ int main()
 {
     t_hashmap *passwords_map;
     t_hashmap *ip_map;
+    t_stats stats;
 
     int fd = open("/var/log/fortress/events/events.json", O_RDONLY);
     if (fd == -1)
@@ -53,7 +54,8 @@ int main()
     ip_map = ft_calloc(1, sizeof(t_hashmap));
     if (!ip_map)
         return (-1);
-    parse_file(fd, passwords_map, ip_map);
+    ft_bzero(&stats, sizeof(t_stats));
+    parse_file(fd, passwords_map, ip_map, &stats);
     printf("Passwords:\n");
     print_hashmap(passwords_map);
     printf("ip:\n");
