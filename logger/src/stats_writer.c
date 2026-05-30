@@ -1,4 +1,5 @@
 #include <stats_writer.h>
+#include <heap_sort.h>
 #include <hash_map.h>
 
 
@@ -54,4 +55,36 @@ void parse_file(int fd, t_hashmap *password_map,t_hashmap *ip_map, t_stats *stat
         }
         free(line);
     }
+}
+
+void write_stats(t_heap *ip_heaps, t_heap *passwords_heap, t_stats *stats)
+{
+    time_t now;
+    char timef[200];
+    char buff[1024];
+    int         fd;
+
+    now = time(NULL);
+    strftime(timef, sizeof(timef), "%Y-%m-%dT%H:%M:%SZ", gmtime(&now));
+    snprintf(buff, sizeof(buff), "{\n\t\"generated_at\": \"%s\",\n\t\"total_atemps\": %d,\n\t\"attemps_last_1h\": %d,\n\t\"attemps_last_24h\": %d,\n\t\"top_passwords\": [\n", timef, stats->total, stats->last_1h, stats->last_24h);
+    for (int i = 0; i < 20; i++)
+    {
+        snprintf(buff, sizeof(buff), "\t{\"password\": \"%s\", \"count\": %d}\n\t", passwords_heap->entries[i]->key, passwords_heap->entries[i]->count);
+        if (i == 9)
+            snprintf(buff, sizeof(buff), "],\n");
+    }
+    snprintf(buff, sizeof(buff), "\"top_ips\": [\n");
+    for (int i = 0; i < 10; i++)
+    {
+        snprintf(buff, sizeof(buff), "\t{\"ip\": \"%s\", \"count\": %d}\n\t", ip_heaps->entries[i]->key, ip_heaps->entries[i]->count);
+        if (i == 9)
+            snprintf(buff, sizeof(buff), "],\n");
+    }
+    snprintf(buff, sizeof(buff), "}");   
+    fd = open("/var/log/fortress/logs/stats.json", O_WRONLY | O_CREAT | O_TRUNC, 577, 0644);
+    if (fd == -1)
+        return ;
+    if (write(fd, buff, ft_strlen(buff)) == -1)
+        return ;
+    close(fd);
 }

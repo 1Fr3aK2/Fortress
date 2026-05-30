@@ -1,6 +1,6 @@
 #include <heap_sort.h>
 
-t_heap *init_heap(t_heap *heap)
+t_heap *init_heap()
 {
     
     return (ft_calloc(1, sizeof(t_heap)));
@@ -63,12 +63,10 @@ t_heap *build_top10(t_hashmap *hashmap)
     //heap_sort
     t_heap *heap;
     t_entry *curr;
-    int i;
 
-    heap = init_heap(heap);
+    heap = init_heap();
     if (!heap)
         return (NULL);    
-    i = 0;
     for (int i = 0; i < 256; i++)
     {
         curr = hashmap->buckets[i];

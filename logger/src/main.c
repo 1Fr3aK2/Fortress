@@ -1,5 +1,6 @@
 #include <stats_writer.h>
 #include <hash_map.h>
+#include <heap_sort.h>
 
 void    print_hashmap(t_hashmap *map)
 {
@@ -41,6 +42,8 @@ int main()
     t_hashmap *passwords_map;
     t_hashmap *ip_map;
     t_stats stats;
+    t_heap *ip_top10;
+    t_heap *passwords_top10;
 
     int fd = open("/var/log/fortress/events/events.json", O_RDONLY);
     if (fd == -1)
@@ -60,6 +63,9 @@ int main()
     print_hashmap(passwords_map);
     printf("ip:\n");
     print_hashmap(ip_map);
+    passwords_top10 = get_top10(passwords_map);
+    ip_top10 = get_top10(ip_map);
+    write_stats(ip_top10, passwords_top10, &stats);
     free_hashmap(passwords_map);
     free_hashmap(ip_map);
     close(fd);
