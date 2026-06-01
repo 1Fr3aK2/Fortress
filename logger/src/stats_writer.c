@@ -68,7 +68,7 @@ void write_stats(t_heap *ip_heaps, t_heap *passwords_heap, t_stats *stats)
         return ;
     now = time(NULL);
     strftime(timef, sizeof(timef), "%Y-%m-%dT%H:%M:%SZ", gmtime(&now));
-    snprintf(buff, sizeof(buff), "{\n\t\"generated_at\": \"%s\",\n\t\"total_atemps\": %d,\n\t\"attemps_last_1h\": %d,\n\t\"attemps_last_24h\": %d,\n\t\"top_passwords\": [\n", timef, stats->total, stats->last_1h, stats->last_24h);
+    snprintf(buff, sizeof(buff), "{\n\t\"generated_at\": \"%s\",\n\t\"total_atemps\": %d,\n\t\"attempts_last_1h\": %d,\n\t\"attempts_last_24h\": %d,\n\t\"top_passwords\": [\n", timef, stats->total, stats->last_1h, stats->last_24h);
     write(fd, buff, ft_strlen(buff));
     for (int i = 0; i < passwords_heap->size; i++)
     {
