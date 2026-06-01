@@ -9,7 +9,7 @@ bool log_event(t_client *client, const char *user, const char *password)
     
     tm_info = gmtime(&client->timestamp);
     strftime(timef, sizeof(timef), "%Y-%m-%dT%H:%M:%SZ", tm_info);
-    snprintf(buff, sizeof(buff), "{\n\t\"timestamp\": \"%s\",\n\t\"ip\": \"%s\",\n\t\"port\" :%d,\n\t\"user\": \"%s\",\n\t\"password\": \"%s\",\n\t\"client_version\": \"%s\"\n}\n", timef, client->ip, client->port, user, password, client->client_version);
+    snprintf(buff, sizeof(buff), "{\n\t\"timestamp\": \"%s\",\n\t\"ip\": \"%s\",\n\t\"port\": \"%d\",\n\t\"user\": \"%s\",\n\t\"password\": \"%s\",\n\t\"client_version\": \"%s\"\n}\n", timef, client->ip, client->port, user, password, client->client_version);
     fd = open("/var/log/fortress/events/events.json", O_WRONLY | O_CREAT | O_APPEND, 0644);
     if (fd == -1)
     {

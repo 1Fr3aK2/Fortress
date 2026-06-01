@@ -11,5 +11,5 @@ RUN make && mkdir -p /var/log/fortress/events
 
 EXPOSE 2222
 
-ENTRYPOINT ["./Fortress"]
+ENTRYPOINT ["./honeypot"]
 
