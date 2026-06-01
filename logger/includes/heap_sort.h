@@ -16,5 +16,6 @@ void insert(t_heap *heap, t_entry *entry);
 t_heap *build_top10(t_hashmap *hashmap);
 t_heap *get_top10(t_hashmap *hashmap);
 void sort_top10(t_heap *heap);
+void free_heap(t_heap *heap);
 
 #endif

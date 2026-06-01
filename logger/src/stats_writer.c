@@ -2,7 +2,6 @@
 #include <heap_sort.h>
 #include <hash_map.h>
 
-
 void fill_stats(t_entry *node, t_stats *stats)
 {
     struct tm tm_info;
@@ -13,7 +12,7 @@ void fill_stats(t_entry *node, t_stats *stats)
     double diff = difftime(now, event_time);
     if (diff < 3600)
         stats->last_1h++;
-    else if (diff < 86400)
+    if (diff < 86400)
         stats->last_24h++;
     stats->total++;
 }
@@ -64,27 +63,32 @@ void write_stats(t_heap *ip_heaps, t_heap *passwords_heap, t_stats *stats)
     char buff[1024];
     int         fd;
 
+    fd = open("/var/log/fortress/logs/stats.json", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (fd == -1)
+        return ;
     now = time(NULL);
     strftime(timef, sizeof(timef), "%Y-%m-%dT%H:%M:%SZ", gmtime(&now));
     snprintf(buff, sizeof(buff), "{\n\t\"generated_at\": \"%s\",\n\t\"total_atemps\": %d,\n\t\"attemps_last_1h\": %d,\n\t\"attemps_last_24h\": %d,\n\t\"top_passwords\": [\n", timef, stats->total, stats->last_1h, stats->last_24h);
-    for (int i = 0; i < 20; i++)
+    write(fd, buff, ft_strlen(buff));
+    for (int i = 0; i < passwords_heap->size; i++)
     {
-        snprintf(buff, sizeof(buff), "\t{\"password\": \"%s\", \"count\": %d}\n\t", passwords_heap->entries[i]->key, passwords_heap->entries[i]->count);
-        if (i == 9)
-            snprintf(buff, sizeof(buff), "],\n");
+        snprintf(buff, sizeof(buff), "\t\t{\"password\": \"%s\", \"count\": %d}", passwords_heap->entries[i]->key, passwords_heap->entries[i]->count);
+        write(fd, buff, ft_strlen(buff));
+        if (i + 1 < passwords_heap->size)
+            write(fd, ",", 1);
+        write(fd, "\n", 1);
     }
+    write(fd, "\t],\n\t", 5);
     snprintf(buff, sizeof(buff), "\"top_ips\": [\n");
-    for (int i = 0; i < 10; i++)
+    write(fd, buff, ft_strlen(buff));
+    for (int i = 0; i < ip_heaps->size; i++)
     {
-        snprintf(buff, sizeof(buff), "\t{\"ip\": \"%s\", \"count\": %d}\n\t", ip_heaps->entries[i]->key, ip_heaps->entries[i]->count);
-        if (i == 9)
-            snprintf(buff, sizeof(buff), "],\n");
+        snprintf(buff, sizeof(buff), "\t\t{\"ip\": \"%s\", \"count\": %d}", ip_heaps->entries[i]->key, ip_heaps->entries[i]->count);
+        write(fd, buff, ft_strlen(buff));
+        if (i + 1 < ip_heaps->size)
+            write(fd, ",", 1);
+        write(fd, "\n", 1);
     }
-    snprintf(buff, sizeof(buff), "}");   
-    fd = open("/var/log/fortress/logs/stats.json", O_WRONLY | O_CREAT | O_TRUNC, 577, 0644);
-    if (fd == -1)
-        return ;
-    if (write(fd, buff, ft_strlen(buff)) == -1)
-        return ;
+    write(fd, "\t]\n}\n", 5);
     close(fd);
 }

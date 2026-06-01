@@ -113,3 +113,10 @@ t_heap *get_top10(t_hashmap *hashmap)
     sort_top10(heap);
     return (heap);
 }
+
+void free_heap(t_heap *heap)
+{
+    if (!heap)
+        return ;
+    free(heap);
+}
