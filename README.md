@@ -3,6 +3,11 @@
 > Made by [1Fr3aK2](https://github.com/1Fr3aK2)
 > `v1.0`
 
+![C](https://img.shields.io/badge/C-00599C?style=flat&logo=c&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
+![Bash](https://img.shields.io/badge/Bash-4EAA25?style=flat&logo=gnubash&logoColor=white)
+![License](https://img.shields.io/badge/license-MIT-green)
+
 A containerized SSH honeypot written in C that captures attacker credentials in real time, aggregates brute-force patterns, and generates threat reports.
 
 Built as a portfolio project to explore systems programming, network security, and container hardening.
@@ -101,11 +106,31 @@ The logger has no network exposure and no capability to accept connections. Its 
 
 ---
 
+## What I Learned
+
+C is my primary language, but this project pushed it into territory I hadn't touched before. The hardest part was working with `libssh` — the documentation is sparse and understanding the flow of `ssh_bind_accept_fd` → `ssh_handle_key_exchange` → `ssh_message_get` took real trial and error. Getting `epoll` right alongside `fork()` also required careful thought: the child process needs to close the epoll fd and the listening socket before doing anything else, otherwise file descriptor leaks cause subtle bugs that only appear under load.
+
+Building the hashmap and min-heap from scratch in C for the logger was a deliberate choice. I wanted to understand the data structures rather than reach for a library. The heap gives O(n log 10) to find the top 10 entries over an arbitrarily large dataset — constant space regardless of how many events accumulate.
+
+Docker hardening was new to me. I knew `cap_drop` existed but understanding *which* capabilities to drop and *why* — and then adding `tmpfs` to handle the edge cases that `read_only` introduces — made the security model concrete rather than theoretical.
+
+---
+
+## Future Work
+
+- **GeoIP resolution** — resolve attacker IPs to country using `libmaxminddb`, include in `stats.json` and the report
+- **Threshold alerts** — trigger a webhook or email when a single IP exceeds N attempts within a time window
+- **Persistent storage** — replace the append-only JSON log with a SQLite database to enable efficient querying over long-running deployments
+- **Web dashboard** — a third container serving a minimal HTML page that reads `stats.json` and renders live charts
+- **Username tracking** — the current aggregation focuses on passwords and IPs; extending it to track usernames would complete the credential picture
+
+---
+
 ## Running
 
 ```bash
-git clone https://github.com/1F3aK2/fortress
-cd fortress
+git clone https://github.com/1Fr3aK2/Fortress
+cd Fortress
 make
 ```
 
@@ -136,16 +161,6 @@ Live capture during a simulated brute-force attack:
 Report generated after aggregation:
 
 ![Fortress Report](./assets/report.png)
-
----
-
-## What I Learned
-
-C is my primary language, but this project pushed it into territory I hadn't touched before. The hardest part was working with `libssh` — the documentation is sparse and understanding the flow of `ssh_bind_accept_fd` → `ssh_handle_key_exchange` → `ssh_message_get` took real trial and error. Getting `epoll` right alongside `fork()` also required careful thought: the child process needs to close the epoll fd and the listening socket before doing anything else, otherwise file descriptor leaks cause subtle bugs that only appear under load.
-
-Building the hashmap and min-heap from scratch in C for the logger was a deliberate choice. I wanted to understand the data structures rather than reach for a library. The heap gives O(n log 10) to find the top 10 entries over an arbitrarily large dataset — constant space regardless of how many events accumulate.
-
-Docker hardening was new to me. I knew `cap_drop` existed but understanding *which* capabilities to drop and *why* — and then adding `tmpfs` to handle the edge cases that `read_only` introduces — made the security model concrete rather than theoretical.
 
 ---
 
