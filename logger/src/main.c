@@ -16,8 +16,9 @@ int main()
         int fd = open("/var/log/fortress/events/events.json", O_RDONLY);
         if (fd == -1)
         {
-            ft_putstr_fd("Error with open() Logger\n", 2);
-            return -1;
+            ft_putstr_fd("Waiting for events file...\n", 2);
+            sleep(60);
+            continue;
         }
         passwords_map = ft_calloc(1, sizeof(t_hashmap));
         if (!passwords_map)
