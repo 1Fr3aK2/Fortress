@@ -23,7 +23,7 @@ grep '"password"' "$FILE" | \
 sed 's/.*"password": "\([^"]*\)".*/\1/' | \
 while IFS= read -r password
 do
-    count=$(grep -A1 "\"password\": \"$password\"" "$FILE" | \
+    count=$(grep "\"password\": \"$password\"" "$FILE" | \
             grep '"count"' | \
             sed 's/.*: \([0-9]*\).*/\1/')
 
@@ -42,7 +42,7 @@ grep '"ip"' "$FILE" | \
 sed 's/.*"ip": "\([^"]*\)".*/\1/' | \
 while IFS= read -r ip
 do
-    count=$(grep -A1 "\"ip\": \"$ip\"" "$FILE" | \
+    count=$(grep "\"ip\": \"$ip\"" "$FILE" | \
             grep '"count"' | \
             sed 's/.*: \([0-9]*\).*/\1/')
 
