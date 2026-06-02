@@ -1,6 +1,6 @@
 #ifndef STATS_WRITER_H
 #define STATS_WRITER_H
-#define _XOPEN_SOURCE 700 //trocar
+#define _XOPEN_SOURCE 700
 
 #include <../libraries/libft/libft.h>
 #include "../libraries/libft/get_next_line/get_next_line_bonus.h"

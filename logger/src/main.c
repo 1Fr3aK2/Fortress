@@ -17,7 +17,7 @@ int main()
         if (fd == -1)
         {
             ft_putstr_fd("Waiting for events file...\n", 2);
-            sleep(5);
+            sleep(60);
             continue;
         }
         passwords_map = ft_calloc(1, sizeof(t_hashmap));
