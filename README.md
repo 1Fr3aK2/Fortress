@@ -1,5 +1,7 @@
 # Fortress
 
+> Made by [1Fr3aK2](https://github.com/1Fr3aK2)
+
 A containerized SSH honeypot written in C that captures attacker credentials in real time, aggregates brute-force patterns, and generates threat reports.
 
 Built as a portfolio project to explore systems programming, network security, and container hardening.
