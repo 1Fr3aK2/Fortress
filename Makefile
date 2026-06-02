@@ -8,6 +8,7 @@ all: clean build up
 prep:
 	@echo "Building volumes directories..."
 	mkdir -p $(VOLUMES)
+	chmod 777 $(VOLUMES)
 
 build: prep
 	@echo "Building images..."
