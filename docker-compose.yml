@@ -17,7 +17,6 @@ services:
     
     volumes:
       - ./logs:/var/log/fortress/events
-      - ./keys:/etc/fortress/keys:ro
     
     cap_drop:
       - ALL
@@ -33,7 +32,7 @@ services:
 
     tmpfs:
       - /tmp
-
+      - /run
   logger:
     container_name: logger
     
@@ -59,7 +58,8 @@ services:
 
     tmpfs:
       - /tmp
-
+      - /run
+      
     depends_on:
       - honeypot
 
