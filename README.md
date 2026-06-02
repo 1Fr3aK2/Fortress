@@ -103,7 +103,7 @@ The logger has no network exposure and no capability to accept connections. Its 
 ## Running
 
 ```bash
-git clone https://github.com/youruser/fortress
+git clone https://github.com/1F3aK2/fortress
 cd fortress
 make
 ```
