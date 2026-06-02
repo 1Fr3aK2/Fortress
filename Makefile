@@ -1,5 +1,5 @@
 COMPOSE = docker compose -f ./docker-compose.yml
-VOLUMES = ./logs ./keys
+VOLUMES = ./logs
 SERVICES = honeypot logger
 
 all: clean build up
@@ -9,7 +9,8 @@ prep:
 	@echo "Building volumes directories..."
 	mkdir -p $(VOLUMES)
 	chmod 777 $(VOLUMES)
-
+	@ssh-keygen -f "$(HOME)/.ssh/known_hosts" -R "[localhost]:2222" 2>/dev/null || true
+	
 build: prep
 	@echo "Building images..."
 	$(COMPOSE) build

@@ -5,7 +5,8 @@ echo "║        FORTRESS — Daily Report       ║"
 printf "║         %s         ║\n" "$(date -u '+%Y-%m-%d %H:%M UTC')"
 echo "╚══════════════════════════════════════╝"
 
-FILE="../logs/stats.json"
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+FILE="$SCRIPT_DIR/../logs/stats.json"
 
 TATTEMPTS=$(grep '"total_attempts"' "$FILE" | sed 's/.*: \([0-9]*\).*/\1/')
 L1H=$(grep '"attempts_last_1h"' "$FILE" | sed 's/.*: \([0-9]*\).*/\1/')
@@ -27,7 +28,7 @@ do
             grep '"count"' | \
             sed 's/.*: \([0-9]*\).*/\1/')
 
-    printf "%d. %s\t(%s attempts)\n" "$i" "$password" "$count"
+    printf "%2d. %-20s (%s attempts)\n" "$i" "$password" "$count"
 
     i=$((i + 1))
 
@@ -46,7 +47,7 @@ do
             grep '"count"' | \
             sed 's/.*: \([0-9]*\).*/\1/')
 
-    printf "%d. %s\t(%s attempts)\n" "$i" "$ip" "$count"
+    printf "%2d. %-20s (%s attempts)\n" "$i" "$ip" "$count"
 
     i=$((i + 1))
 
