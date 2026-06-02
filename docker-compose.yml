@@ -7,7 +7,7 @@ services:
       context: ./honeypot
       dockerfile: Dockerfile
     
-    image: honeypot:fortress
+    image: honeypot:honeypot
     
     ports:
       - "2222:2222"
@@ -17,7 +17,6 @@ services:
     
     volumes:
       - ./logs:/var/log/fortress/events
-      - ./keys:/etc/fortress/keys:ro
     
     cap_drop:
       - ALL
@@ -33,6 +32,36 @@ services:
 
     tmpfs:
       - /tmp
+      - /run
+  logger:
+    container_name: logger
+    
+    build:      
+      context: ./logger
+      dockerfile: Dockerfile
+
+    image: logger:logger
+
+    networks:
+      - fortress
+
+    volumes:
+      - ./logs:/var/log/fortress/events:ro
+      - ./logs:/var/log/fortress/logs
+
+    mem_limit : 256m
+    cpus: 0.50
+
+    restart: unless-stopped
+
+    read_only: true
+
+    tmpfs:
+      - /tmp
+      - /run
+      
+    depends_on:
+      - honeypot
 
 networks:
   fortress:
