@@ -17,23 +17,23 @@ Built as a portfolio project to explore systems programming, network security, a
 ## Architecture
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│  Docker network: fortress (bridge)                       │
-│                                                          │
-│  ┌─────────────────────┐        ┌──────────────────────┐ │
-│  │   honeypot (C)      │        │    logger (C)        │ │
-│  │                     │        │                      │ │
-│  │  epoll loop         │        │  parse events.json   │ │
-│  │  fork() per conn    │─logs──▶│  hashmap aggregation │ │
-│  │  libssh trap        │        │  min-heap top 10     │ │
-│  │  JSON logger        │        │  write stats.json    │ │
-│  └─────────────────────┘        └──────────────────────┘ │
-│           │                               │               │
-│     port 2222                     ./logs/stats.json       │
-│                                           │               │
-│                                           ▼               │
-│                                  ./scripts/report.sh      │
-└──────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│  Docker network: fortress (bridge)                          │
+│                                                             │
+│  ┌──────────────────────┐        ┌──────────────────────┐  │
+│  │   honeypot (C)       │        │    logger (C)        │  │
+│  │                      │        │                      │  │
+│  │  epoll loop          │        │  parse events.json   │  │
+│  │  fork() per conn     │─logs──▶│  hashmap aggregation │  │
+│  │  libssh trap         │        │  min-heap top 10     │  │
+│  │  JSON logger         │        │  write stats.json    │  │
+│  └──────────────────────┘        └──────────────────────┘  │
+│           │                               │                 │
+│       port 2222                  ./logs/stats.json          │
+│                                           │                 │
+│                                           ▼                 │
+│                               ./scripts/report.sh           │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 Two containers share a single volume. The honeypot only captures. The logger only analyses. If the honeypot is ever compromised, the logger is unaffected.
@@ -46,7 +46,7 @@ Two containers share a single volume. The honeypot only captures. The logger onl
 The honeypot opens a TCP socket on port 2222 and uses `epoll` to monitor it for incoming connections. When a connection arrives, it calls `fork()` — the child handles the SSH session, the parent goes back to waiting.
 
 **2. SSH handshake**
-The child process uses `libssh` (`ssh_bind`, `ssh_bind_accept_fd`) to perform a real SSH key exchange. The server presents an RSA host key generated fresh at image build time. This is enough to fool automated tools like Hydra and Metasploit into thinking they're talking to a real SSH server.
+The child process uses `libssh` (`ssh_bind`, `ssh_bind_accept_fd`) to perform a real SSH key exchange. The server presents an RSA host key generated at image build time. This is enough to fool automated tools like Hydra and Metasploit into thinking they're talking to a real SSH server.
 
 **3. Credential capture**
 After the key exchange, the honeypot waits for `SSH_REQUEST_AUTH` messages with subtype `SSH_AUTH_METHOD_PASSWORD`. Every username and password is extracted via `ssh_message_auth_user()` and `ssh_message_auth_password()`, then rejected with `ssh_message_reply_default()` to keep the attacker trying.
@@ -97,12 +97,12 @@ The logger has no network exposure and no capability to accept connections. Its 
 
 ## What I Built
 
-| Component | Language | Key concepts |
-|---|---|---|
-| Honeypot | C | `epoll`, `fork`, `libssh`, JSON serialisation |
-| Logger | C | Hashmap, min-heap, `get_next_line`, file I/O |
-| Report | Bash | `sed`, `grep`, formatted terminal output |
-| Infrastructure | Docker | Multi-container compose, volume sharing, hardening |
+| Component      | Language | Key concepts                                       |
+|----------------|----------|----------------------------------------------------|
+| Honeypot       | C        | `epoll`, `fork`, `libssh`, JSON serialisation      |
+| Logger         | C        | Hashmap, min-heap, `get_next_line`, file I/O       |
+| Report         | Bash     | `sed`, `grep`, formatted terminal output           |
+| Infrastructure | Docker   | Multi-container compose, volume sharing, hardening |
 
 ---
 
@@ -116,13 +116,15 @@ Docker hardening was new to me. I knew `cap_drop` existed but understanding *whi
 
 ---
 
-## Future Work
+## Future Work (v2.0)
 
-- **GeoIP resolution** — resolve attacker IPs to country using `libmaxminddb`, include in `stats.json` and the report
-- **Threshold alerts** — trigger a webhook or email when a single IP exceeds N attempts within a time window
-- **Persistent storage** — replace the append-only JSON log with a SQLite database to enable efficient querying over long-running deployments
-- **Web dashboard** — a third container serving a minimal HTML page that reads `stats.json` and renders live charts
-- **Username tracking** — the current aggregation focuses on passwords and IPs; extending it to track usernames would complete the credential picture
+- **Manual SSH protocol parsing** — replace `libssh` with a hand-rolled SSH handshake using OpenSSL directly, eliminating the external dependency and demonstrating deep protocol knowledge at the packet level
+- **Thread pool** — replace `fork()` per connection with a fixed-size thread pool for better resource efficiency under high concurrency, removing the overhead of process creation per session
+- **HTTP and FTP honeypots** — extend to additional services with fake admin panels and login pages to capture a broader attacker profile and detect web-based scanners
+- **Real-time dashboard** — a third container serving live threat visualisations via Server-Sent Events over a C++ HTTP server, built on top of the existing Webserv foundation
+- **GeoIP resolution** — resolve attacker IPs to country using `libmaxminddb`, include in `stats.json` and the terminal report
+- **Brute-force alerts** — sliding window detection triggering a webhook or email when a single IP exceeds a configurable threshold within a time window
+- **Username tracking** — extend hashmap aggregation to cover usernames alongside passwords and IPs for a complete credential picture
 
 ---
 
