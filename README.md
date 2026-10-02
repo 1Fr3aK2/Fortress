@@ -139,18 +139,22 @@ make
 `make` builds both images, cleans the host key from `known_hosts` to avoid false warnings, and starts both containers in the background.
 
 ```bash
+# Simple test
+ssh -p 2222 root@localhost
+
+# Or test with Hydra
+hydra -l root -P wordlist.txt ssh://localhost:2222
+
 # View live events
 tail -f ./logs/events.json
 
 # Generate a report
 ./scripts/report.sh
 
-# Test with Hydra
-hydra -l root -P wordlist.txt ssh://localhost:2222
-
 # Stop everything
 make down
 ```
+
 
 ---
 
