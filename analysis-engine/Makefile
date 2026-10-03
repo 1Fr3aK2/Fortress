@@ -13,10 +13,6 @@ SRCS = \
 OBJ_DIR = obj
 OBJS = $(SRCS:src/%.cpp=$(OBJ_DIR)/%.o)
 
-LIBFT_DIR = ./libraries/libft
-LIBFT = $(LIBFT_DIR)/libft.a
-
-
 RESET   = \033[0m
 GREEN   = \033[32m
 YELLOW  = \033[33m
@@ -25,20 +21,15 @@ RED     = \033[31m
 
 all: $(NAME)
 
-$(NAME): $(OBJS) $(LIBFT)
+$(NAME): $(OBJS)
 	@echo "$(YELLOW)compiling $(NAME)...$(RESET)"
-	@$(CC) $(CFLAGS) -o $(NAME) $(OBJS) $(LIBFT)
+	@$(CC) $(CFLAGS) -o $(NAME) $(OBJS)
 	@echo "$(GREEN)$(NAME) ready!$(RESET)"
 
 $(OBJ_DIR)/%.o: src/%.cpp
 	@mkdir -p $(@D)
 	@echo "$(BLUE)making objs directorys!$(RESET)"
 	@$(CC) $(CFLAGS) -c $< -o $@
-
-$(LIBFT):
-	@echo "$(YELLOW)compiling LIBFT ...$(RESET)"
-	@$(MAKE) -C $(LIBFT_DIR) --no-print-directory
-
 
 v: re
 	valgrind --leak-check=full --track-fds=yes --show-leak-kinds=all --track-origins=yes --show-reachable=yes ./$(NAME)
