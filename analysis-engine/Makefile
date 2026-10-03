@@ -4,6 +4,7 @@ CFLAGS = -Wall -Wextra -Werror -g -I./includes
 
 SRCS = \
 	src/alert_writer.cpp \
+	src/attacker_profile.cpp \
 	src/log_parser.cpp \
 	src/main.cpp \
 	src/pattern_engine.cpp \
