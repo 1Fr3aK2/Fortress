@@ -7,13 +7,14 @@
 #include <map>
 #include <string>
 
-struct event
+struct Event
 {
     time_t timestamp;
     std::string clientVersion;
     std::string srcIp;
     uint16_t port;
-    std::map<std::string, std::string> data;
+    std::string user;
+    std::string password;
 };
 
 

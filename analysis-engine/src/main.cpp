@@ -2,20 +2,24 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <log_parser.hpp>
 
 
 int main()
 {
-    std::ifstream file("tests/sample_events.json");
-    if (!file.is_open())
+    Event e;
+    logParser parser("tests/sample_events.json");
+
+    while (parser.nextEvent(e))
     {
-        std::cerr << "Error: error opening the file\n";
-        return 1;
+        std::cout << "Timestamp: " << e.timestamp << std::endl;
+        std::cout << "IP: " << e.srcIp << std::endl;
+        std::cout << "Port: " << e.port << std::endl;
+        std::cout << "User: " << e.user << std::endl;
+        std::cout << "Password: " << e.password << std::endl;
+        std::cout << "Client Version: " << e.clientVersion << std::endl;
+        std::cout << "-----------------------------" << std::endl;
     }
 
-    std::string line;
-    size_t n = 1;
-    while (std::getline(file, line))
-        std::cout << n++ << ": [" << line << "]" << std::endl;
-    return 0;   
+    return 0;
 }

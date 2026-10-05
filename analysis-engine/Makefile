@@ -1,6 +1,6 @@
 NAME = Analyser
 CC = c++
-CFLAGS = -Wall -Wextra -Werror -g -I./includes
+CFLAGS = -Wall -Wextra -Werror -g -std=c++20 -I./includes
 
 SRCS = \
 	src/alert_writer.cpp \
@@ -31,17 +31,16 @@ $(OBJ_DIR)/%.o: src/%.cpp
 	@echo "$(BLUE)making objs directorys!$(RESET)"
 	@$(CC) $(CFLAGS) -c $< -o $@
 
+
 v: re
 	valgrind --leak-check=full --track-fds=yes --show-leak-kinds=all --track-origins=yes --show-reachable=yes ./$(NAME)
 
 clean:
 	@rm -rf $(OBJ_DIR)
-	@$(MAKE) -C $(LIBFT_DIR) clean --no-print-directory
 	@echo "$(RED)objs cleaned$(RESET)"
 
 fclean: clean
 	@rm -f $(NAME)
-	@$(MAKE) -C $(LIBFT_DIR) fclean --no-print-directory
 	@echo "$(RED)$(NAME) removed!$(RESET)"
 
 re: fclean all
