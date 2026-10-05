@@ -1,9 +1,6 @@
 #include <event.hpp>
 #include <log_parser.hpp>
 #include <sstream>
-#include <chrono>
-#include <sstream>
-#include <iomanip>
 #include <ctime>
 
 logParser::logParser(const std::string& path) : file(path.c_str())
@@ -28,14 +25,14 @@ bool logParser::parse(const std::string &line, Event &e)
     std::string user;
     std::string password;
 
-    if (line.find("ip") != std::string::npos)
+    if (line.find("\"ip\"") != std::string::npos)
     {
         value = parseLine(line, "ip");
         if (value.empty())
             return false;
         e.srcIp = value;
     }
-    if (line.find("timestamp") != std::string::npos)
+    if (line.find("\"timestamp\"") != std::string::npos)
     {
         value = parseLine(line, "timestamp");
         if (value.empty())
@@ -45,7 +42,7 @@ bool logParser::parse(const std::string &line, Event &e)
             return false;
         e.timestamp = timegm(&tm);
     }
-    if (line.find("port") != std::string::npos)
+    if (line.find("\"port\"") != std::string::npos)
     {
         value = parseLine(line, "port");
         if (value.empty())
@@ -55,21 +52,21 @@ bool logParser::parse(const std::string &line, Event &e)
         ss >> port;
         e.port = port;
     }
-    if (line.find("client_version") != std::string::npos)
+    if (line.find("\"client_version\"") != std::string::npos)
     {
         value = parseLine(line, "client_version");
         if (value.empty())
             return false;
         e.clientVersion = value;
     }
-    if (line.find("user") != std::string::npos)
+    if (line.find("\"user\"") != std::string::npos)
     {
         value = parseLine(line, "user");
         if (value.empty())
             return false;
         e.user = value;
     }
-    if (line.find("password") != std::string::npos)
+    if (line.find("\"password\"") != std::string::npos)
     {
         value = parseLine(line, "password");
         if (value.empty())
@@ -114,7 +111,13 @@ bool logParser::nextEvent(Event &event)
             return true;
         }
         else
-            parse(line, e);
+        {
+            if (!parse(line, e))
+            {
+                std::cerr << "Error doing the parsing of the file\n";
+                return false;
+            }
+        }
     }
     return false;    
 }
