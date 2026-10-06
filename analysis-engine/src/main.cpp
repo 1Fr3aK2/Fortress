@@ -5,6 +5,7 @@
 #include <log_parser.hpp>
 #include <attacker_profile.hpp>
 #include <sliding_window.hpp>
+#include <detection_engine.hpp>
 
 
 int main()
@@ -12,10 +13,11 @@ int main()
     Event e;
     logParser parser("tests/sample_events.json");
     const size_t windowSize = 60;
+    detectionEngine Engine;
     std::unordered_map<std::string, attacker> Profile;
     while (parser.nextEvent(e))
     {
-        if (!processEvents(e, Profile, windowSize))
+        if (!processEvents(e, Profile, windowSize, Engine))
         {
             std::cerr << "Error processing Events\n";
             return -1;

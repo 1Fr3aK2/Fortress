@@ -7,7 +7,7 @@ SRCS = \
 	src/attacker_profile.cpp \
 	src/log_parser.cpp \
 	src/main.cpp \
-	src/pattern_engine.cpp \
+	src/detection_engine.cpp \
 	src/sliding_window.cpp \
 
 OBJ_DIR = obj

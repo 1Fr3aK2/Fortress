@@ -12,6 +12,7 @@ struct slidingWindow
     std::deque<time_t> timestamps;
     slidingWindow(time_t windowSize);
     void addTimestamp(time_t timestamp);
+    size_t getOccurrences();
 };
 
 

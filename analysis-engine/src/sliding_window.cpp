@@ -10,3 +10,8 @@ void slidingWindow::addTimestamp(time_t timestamp)
     while (timestamp - timestamps.front() > WindowSize)
         timestamps.pop_front();
 }
+
+size_t slidingWindow::getOccurrences()
+{
+    return(timestamps.size());
+}

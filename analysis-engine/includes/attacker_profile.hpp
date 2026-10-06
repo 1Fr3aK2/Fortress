@@ -6,6 +6,7 @@
 #include <event.hpp>
 #include <unordered_map>
 #include <sliding_window.hpp>
+#include <detection_engine.hpp>
 
 
 struct attackerProfile
@@ -23,9 +24,9 @@ struct attacker
 {
     attackerProfile profile;
     slidingWindow window;
-    attacker(const Event& event, size_t windowSize);
+    attacker(const Event& event, time_t windowSize);
 };
 
 
-bool processEvents(const Event& event, std::unordered_map<std::string, attacker>& Profile, size_t windowSize);
+bool processEvents(const Event& event, std::unordered_map<std::string, attacker>& Profile, time_t windowSize, detectionEngine &Engine);
 #endif
