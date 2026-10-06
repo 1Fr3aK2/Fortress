@@ -1,5 +1,6 @@
 #include <attacker_profile.hpp>
 #include <unordered_map>
+#include <sliding_window.hpp>
 
 attackerProfile::attackerProfile(const Event& event)
 {
@@ -9,6 +10,10 @@ attackerProfile::attackerProfile(const Event& event)
     port.push_back(event.port);
     user.push_back(event.user);
     password.push_back(event.password);
+}
+
+attacker::attacker(const Event& event, size_t windowSize) : profile(event), window(windowSize)
+{
 }
 
 static void updateProfile(const Event& event, attackerProfile& attacker)
@@ -21,16 +26,16 @@ static void updateProfile(const Event& event, attackerProfile& attacker)
     attacker.password.push_back(event.password);
 }
 
-bool processEvents(const Event& event, std::unordered_map<std::string, attackerProfile>& Profile)
+bool processEvents(const Event& event, std::unordered_map<std::string, attacker>& Profile, size_t windowSize)
 {
-    std::unordered_map<std::string, attackerProfile>::iterator it;
+    std::unordered_map<std::string, attacker>::iterator it;
     it = Profile.find(event.srcIp); 
     if (it == Profile.end())
     {
-        attackerProfile attacker(event);
+        attacker newAttacker(event, windowSize);
         try
         {
-            Profile.insert(std::make_pair(event.srcIp, attacker));
+            Profile.insert(std::make_pair(event.srcIp, newAttacker));
         }
         catch (const std::exception&)
         {
@@ -38,6 +43,6 @@ bool processEvents(const Event& event, std::unordered_map<std::string, attackerP
         }
     }
     else
-        updateProfile(event, it->second);
+        updateProfile(event, it->second.profile);
     return true;
 }

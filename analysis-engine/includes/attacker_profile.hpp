@@ -5,6 +5,8 @@
 #include <string>
 #include <event.hpp>
 #include <unordered_map>
+#include <sliding_window.hpp>
+
 
 struct attackerProfile
 {
@@ -17,6 +19,13 @@ struct attackerProfile
     attackerProfile(const Event& event);
 };
 
+struct attacker
+{
+    attackerProfile profile;
+    slidingWindow window;
+    attacker(const Event& event, size_t windowSize);
+};
 
-bool processEvents(const Event& event, std::unordered_map<std::string, attackerProfile>& Profile);
+
+bool processEvents(const Event& event, std::unordered_map<std::string, attacker>& Profile, size_t windowSize);
 #endif
