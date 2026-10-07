@@ -9,6 +9,7 @@
 #include <detection_engine.hpp>
 #include <alert_writer.hpp>
 
+#define INACTIVE 300
 
 struct attackerProfile
 {
@@ -25,10 +26,12 @@ struct attacker
 {
     attackerProfile profile;
     slidingWindow window;
-    attacker(const Event& Event, time_t WindowSize);
+    time_t lastTimeSeen;
+    attacker(const Event& Event, time_t WindowSize, time_t LastTimeSeen);
 };
 
 
 bool processEvents(const Event& Event, std::unordered_map<std::string, attacker>& Profile, time_t WindowSize, detectionEngine &Engine, Alert& Alert);
+void removeInactiveIp(std::unordered_map<std::string, attacker>& Profile, time_t Timestamp, detectionEngine& Engine);
 
 #endif

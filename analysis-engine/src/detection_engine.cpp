@@ -24,3 +24,11 @@ alertSeverity detectionEngine::checkBruteForce(const std::string& Ip, size_t Occ
     }
     return attackerAlert[Ip];
 }
+
+void detectionEngine::removeAttacker(const std::string& Ip)
+{
+    std::map<std::string, alertSeverity>::iterator it;
+    it = attackerAlert.find(Ip);
+    if (it != attackerAlert.end())
+        attackerAlert.erase(it);
+}

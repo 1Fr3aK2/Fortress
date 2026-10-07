@@ -22,6 +22,7 @@ class detectionEngine
         detectionEngine();
         ~detectionEngine();
         alertSeverity checkBruteForce(const std::string& Ip, size_t Occurrences);
+        void removeAttacker(const std::string& Ip);
 };
 
 
