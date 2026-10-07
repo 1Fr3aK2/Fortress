@@ -3,6 +3,7 @@
 
 #include <string>
 #include <ctime>
+#include <detection_engine.hpp>
 
 struct Alert
 {
@@ -22,6 +23,6 @@ struct alertWriter
     bool writeAlert(const Alert& Alert);
 };
 
-Alert buildAlert(time_t Timestamp, const std::string& Ip, time_t Windowsize, size_t Total);
+Alert buildAlert(time_t Timestamp, const std::string& Ip, time_t Windowsize, size_t Total, alertSeverity alertSeverity);
 
 #endif
