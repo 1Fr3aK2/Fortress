@@ -2,8 +2,9 @@
 #include <log_parser.hpp>
 #include <sstream>
 #include <ctime>
+#include <iostream>
 
-logParser::logParser(const std::string& path) : file(path.c_str())
+logParser::logParser(const std::string& Path) : file(Path.c_str())
 {    
     if (!file.is_open())
     {
@@ -19,85 +20,83 @@ logParser::~logParser()
 }
 
 
-bool logParser::parse(const std::string &line, Event &e)
+bool logParser::parse(const std::string& Line, Event& Event)
 {
-    std::string value;
-    std::string user;
-    std::string password;
+    std::string Value;
 
-    if (line.find("\"ip\"") != std::string::npos)
+    if (Line.find("\"ip\"") != std::string::npos)
     {
-        value = parseLine(line, "ip");
-        if (value.empty())
+        Value = parseLine(Line, "ip");
+        if (Value.empty())
             return false;
-        e.srcIp = value;
+        Event.srcIp = Value;
     }
-    if (line.find("\"timestamp\"") != std::string::npos)
+    if (Line.find("\"timestamp\"") != std::string::npos)
     {
-        value = parseLine(line, "timestamp");
-        if (value.empty())
+        Value = parseLine(Line, "timestamp");
+        if (Value.empty())
             return false;
         std::tm tm = {};
-        if (strptime(value.c_str(), "%Y-%m-%dT%H:%M:%SZ", &tm) == NULL)
+        if (strptime(Value.c_str(), "%Y-%m-%dT%H:%M:%SZ", &tm) == NULL)
             return false;
-        e.timestamp = timegm(&tm);
+        Event.timestamp = timegm(&tm);
     }
-    if (line.find("\"port\"") != std::string::npos)
+    if (Line.find("\"port\"") != std::string::npos)
     {
-        value = parseLine(line, "port");
-        if (value.empty())
+        Value = parseLine(Line, "port");
+        if (Value.empty())
             return false;
         int port;
-        std::stringstream ss(value);
+        std::stringstream ss(Value);
         ss >> port;
-        e.port = port;
+        Event.port = port;
     }
-    if (line.find("\"client_version\"") != std::string::npos)
+    if (Line.find("\"client_version\"") != std::string::npos)
     {
-        value = parseLine(line, "client_version");
-        if (value.empty())
+        Value = parseLine(Line, "client_version");
+        if (Value.empty())
             return false;
-        e.clientVersion = value;
+        Event.clientVersion = Value;
     }
-    if (line.find("\"user\"") != std::string::npos)
+    if (Line.find("\"user\"") != std::string::npos)
     {
-        value = parseLine(line, "user");
-        if (value.empty())
+        Value = parseLine(Line, "user");
+        if (Value.empty())
             return false;
-        e.user = value;
+        Event.user = Value;
     }
-    if (line.find("\"password\"") != std::string::npos)
+    if (Line.find("\"password\"") != std::string::npos)
     {
-        value = parseLine(line, "password");
-        if (value.empty())
+        Value = parseLine(Line, "password");
+        if (Value.empty())
             return false;
-        e.password = value;
+        Event.password = Value;
     }
     return true;
 }
 
-std::string logParser::parseLine(const std::string& line, const std::string &key)
+std::string logParser::parseLine(const std::string& Line, const std::string &Key)
 {
-    std::string value;
-    size_t pos;
-    size_t ddots = line.find(":");
-    if (ddots == std::string::npos)
+    std::string Value;
+    size_t Pos;
+    size_t Ddots = Line.find(":");
+    if (Ddots == std::string::npos)
         return "";
-    pos = line.find(key);
-    if (pos != std::string::npos)
+    Pos = Line.find(Key);
+    if (Pos != std::string::npos)
     {
-        size_t start = ddots + 3;
-        size_t end = line.find("\"", start);
+        size_t start = Ddots + 3;
+        size_t end = Line.find("\"", start);
         if (end == std::string::npos)
             return "";
-        value = line.substr(start , end - start);
-        if (value.empty())
+        Value = Line.substr(start , end - start);
+        if (Value.empty())
             return "";
     }
-    return value;
+    return Value;
 }
 
-bool logParser::nextEvent(Event &event)
+parseResult logParser::nextEvent(Event &event)
 {
     std::string line;
     Event e;
@@ -108,16 +107,21 @@ bool logParser::nextEvent(Event &event)
         else if (line.find("}") != std::string::npos)
         {
             event = e;
-            return true;
+            return EVENT_READ;
         }
         else
         {
             if (!parse(line, e))
             {
                 std::cerr << "Error doing the parsing of the file\n";
-                return false;
+                return PARSE_ERROR;
             }
         }
     }
-    return false;    
+    if (file.eof())
+    {
+        file.clear();
+        return NO_EVENT;
+    }
+    return PARSE_ERROR;    
 }

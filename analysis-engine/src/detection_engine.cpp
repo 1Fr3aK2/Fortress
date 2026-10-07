@@ -6,9 +6,9 @@ detectionEngine::detectionEngine(){
 detectionEngine::~detectionEngine(){
 }
 
-bool detectionEngine::checkBruteForce(size_t occurrences)
+bool detectionEngine::checkBruteForce(size_t Occurrences)
 {
-    if (occurrences >= BRUTE_FORCE_THRESHOLD)
+    if (Occurrences >= BRUTE_FORCE_THRESHOLD)
         return true;
     return false;
 }

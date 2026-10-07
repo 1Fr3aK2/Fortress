@@ -1,43 +1,42 @@
 #include <attacker_profile.hpp>
+#include <alert_writer.hpp>
 #include <unordered_map>
-#include <sliding_window.hpp>
-#include <detection_engine.hpp>
 
-attackerProfile::attackerProfile(const Event& event)
+attackerProfile::attackerProfile(const Event& Event)
 {
     total = 1;
-    timestamps.push_back(event.timestamp);
-    clientVersion.push_back(event.clientVersion);
-    port.push_back(event.port);
-    user.push_back(event.user);
-    password.push_back(event.password);
+    timestamps.push_back(Event.timestamp);
+    clientVersion.push_back(Event.clientVersion);
+    port.push_back(Event.port);
+    user.push_back(Event.user);
+    password.push_back(Event.password);
 }
 
-attacker::attacker(const Event& event, time_t windowSize) : profile(event), window(windowSize)
+attacker::attacker(const Event& Event, time_t WindowSize) : profile(Event), window(WindowSize)
 {
 }
 
-static void updateProfile(const Event& event, attackerProfile& attacker)
+static void updateProfile(const Event& Event, attackerProfile& Attacker)
 {
-    attacker.total++;
-    attacker.clientVersion.push_back(event.clientVersion);
-    attacker.timestamps.push_back(event.timestamp);
-    attacker.port.push_back(event.port);
-    attacker.user.push_back(event.user);
-    attacker.password.push_back(event.password);
+    Attacker.total++;
+    Attacker.clientVersion.push_back(Event.clientVersion);
+    Attacker.timestamps.push_back(Event.timestamp);
+    Attacker.port.push_back(Event.port);
+    Attacker.user.push_back(Event.user);
+    Attacker.password.push_back(Event.password);
 }
 
-bool processEvents(const Event& event, std::unordered_map<std::string, attacker>& Profile, time_t windowSize, detectionEngine& Engine)
+bool processEvents(const Event& Event, std::unordered_map<std::string, attacker>& Profile, time_t WindowSize, detectionEngine& Engine, Alert& Alert)
 {
     std::unordered_map<std::string, attacker>::iterator it;
-    it = Profile.find(event.srcIp); 
+    it = Profile.find(Event.srcIp); 
     if (it == Profile.end())
     {
-        attacker newAttacker(event, windowSize);
-        newAttacker.window.addTimestamp(event.timestamp);
+        attacker NewAttacker(Event, WindowSize);
+        NewAttacker.window.addTimestamp(Event.timestamp);
         try
         {
-            it = Profile.insert(std::make_pair(event.srcIp, newAttacker)).first;
+            it = Profile.insert(std::make_pair(Event.srcIp, NewAttacker)).first;
         }
         catch (const std::exception&)
         {
@@ -46,10 +45,11 @@ bool processEvents(const Event& event, std::unordered_map<std::string, attacker>
     }
     else
     {
-        updateProfile(event, it->second.profile);
-        it->second.window.addTimestamp(event.timestamp);
+        updateProfile(Event, it->second.profile);
+        it->second.window.addTimestamp(Event.timestamp);
     }
-    size_t occurrences = it->second.window.getOccurrences();
-    Engine.checkBruteForce(occurrences);    
+    size_t Occurrences = it->second.window.getOccurrences();
+    if (Engine.checkBruteForce(Occurrences))
+        Alert = buildAlert(Event.timestamp, it->first, it->second.window.WindowSize, Occurrences);
     return true;
 }

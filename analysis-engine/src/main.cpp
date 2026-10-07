@@ -1,44 +1,48 @@
 #include <event.hpp>
-#include <fstream>
-#include <iostream>
-#include <sstream>
 #include <log_parser.hpp>
 #include <attacker_profile.hpp>
-#include <sliding_window.hpp>
 #include <detection_engine.hpp>
-
+#include <alert_writer.hpp>
+#include <unordered_map>
+#include <iostream>
+#include <unistd.h>
 
 int main()
 {
-    Event e;
-    logParser parser("tests/sample_events.json");
-    const size_t windowSize = 60;
-    detectionEngine Engine;
     std::unordered_map<std::string, attacker> Profile;
-    while (parser.nextEvent(e))
+    detectionEngine Engine;
+    alertWriter Writer("/var/log/fortress/alerts/alerts.json");
+    
+    logParser parser("/var/log/fortress/events/events.json");
+    Event e;
+    
+    const time_t windowSize = 60;
+    while(true)
     {
-        if (!processEvents(e, Profile, windowSize, Engine))
+        parseResult result;
+        while ((result = parser.nextEvent(e)) == EVENT_READ)
         {
-            std::cerr << "Error processing Events\n";
-            return -1;
+            Alert alert(0, "", 0);
+            if (!processEvents(e, Profile, windowSize, Engine, alert))
+            {
+                std::cerr << "Error processing Events\n";
+                return -1;
+            }
+            if (alert.count > 0)
+            {
+                if (!Writer.writeAlert(alert))
+                {
+                    std::cerr << "Error writing alert\n";
+                    return 1;
+                }
+            }
         }
-        
-    }
-    std::unordered_map<std::string, attacker>::iterator it;
-    for (it = Profile.begin(); it != Profile.end(); ++it)
-    {
-        std::cout << "IP: " << it->first << std::endl;
-        std::cout << "Total attempts: " << it->second.profile.total << std::endl;
-        std::cout << "-----------------------------" << std::endl;
-        for (size_t i = 0; i < it->second.profile.total; i++)
+        if (result == PARSE_ERROR)
         {
-            std::cout << "Timestamp: " << it->second.profile.timestamps[i] << std::endl;
-            std::cout << "Port: " << it->second.profile.port[i] << std::endl;
-            std::cout << "User: " << it->second.profile.user[i] << std::endl;
-            std::cout << "Password: " << it->second.profile.password[i] << std::endl;
-            std::cout << "Client Version: " << it->second.profile.clientVersion[i] << std::endl;
-            std::cout << "-----------------------------" << std::endl;
+            std::cerr << "Error reading events\n";
+            return 1;
         }
+        sleep(60);
     }
     return 0;
 }

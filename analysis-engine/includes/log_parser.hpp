@@ -3,17 +3,26 @@
 
 #include <string>
 #include <fstream>
+#include <event.hpp>
+
+
+enum parseResult
+{
+    EVENT_READ,
+    NO_EVENT,
+    PARSE_ERROR
+};
 
 class logParser
 {
     private:
         std::ifstream file;
-        bool parse(const std::string& line, Event& e);
-        std::string parseLine(const std::string& line, const std::string& key);
+        bool parse(const std::string& Line, Event& Event);
+        std::string parseLine(const std::string& Line, const std::string& Key);
     public:
-        logParser(const std::string& path);
+        logParser(const std::string& Path);
         ~logParser();
-        bool nextEvent(Event &event);
+        parseResult nextEvent(Event& event);
 };
 
 #endif

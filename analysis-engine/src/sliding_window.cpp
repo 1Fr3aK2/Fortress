@@ -1,13 +1,13 @@
 #include <sliding_window.hpp>
 
-slidingWindow::slidingWindow(time_t windowSize) : WindowSize(windowSize)
+slidingWindow::slidingWindow(time_t WindowSize) : WindowSize(WindowSize)
 {
 }
 
-void slidingWindow::addTimestamp(time_t timestamp)
+void slidingWindow::addTimestamp(time_t Timestamp)
 {
-    timestamps.push_back(timestamp);
-    while (timestamp - timestamps.front() > WindowSize)
+    timestamps.push_back(Timestamp);
+    while (!timestamps.empty() && Timestamp - timestamps.front() > WindowSize)
         timestamps.pop_front();
 }
 

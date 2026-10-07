@@ -1,6 +1,6 @@
 COMPOSE = docker compose -f ./docker-compose.yml
 VOLUMES = ./logs
-SERVICES = honeypot logger
+SERVICES = honeypot logger analyser
 
 all: clean build up
 	@echo "Fortress started!"
@@ -25,18 +25,24 @@ down:
 
 clean:
 	@echo "Cleaning Docker..."
+	@$(MAKE) -C ./honeypot clean --no-print-directory > /dev/null     
+	@$(MAKE) -C ./logger clean --no-print-directory > /dev/null     
+	@$(MAKE) -C ./analysis-engine clean --no-print-directory > /dev/null
 	$(COMPOSE) down -v
 	docker system prune -f
-	rm -rf ./logs
+	sudo rm -rf ./logs
 
 fclean:
 	@echo "Full cleaning Docker..."
+	@$(MAKE) -C ./honeypot fclean --no-print-directory > /dev/null     
+	@$(MAKE) -C ./logger fclean --no-print-directory > /dev/null     
+	@$(MAKE) -C ./analysis-engine fclean --no-print-directory > /dev/null
 	-docker stop $$(docker ps -qa)
 	-docker rm $$(docker ps -qa)
 	-docker rmi -f $$(docker images -qa)
 	-docker volume rm $$(docker volume ls -q)
 	-docker network rm $$(docker network ls -q) 2>/dev/null
-	rm -rf ./logs
+	sudo rm -rf ./logs
 
 logs:
 	@echo "Check specific service logs (ex: make logs SERVICE=honeypot)"

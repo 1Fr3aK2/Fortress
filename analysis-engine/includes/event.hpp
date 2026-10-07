@@ -1,7 +1,6 @@
 #ifndef EVENT_HPP
 #define EVENT_HPP
 
-#include <iostream>
 #include <ctime>
 #include <string>
 

@@ -1,0 +1,9 @@
+.git
+.gitignore
+Dockerfile
+.dockerignore
+*.o
+*.a
+*.so
+Logger
+obj/

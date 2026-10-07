@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <sliding_window.hpp>
 #include <detection_engine.hpp>
+#include <alert_writer.hpp>
 
 
 struct attackerProfile
@@ -17,16 +18,17 @@ struct attackerProfile
     std::vector<uint16_t> port;
     std::vector<std::string> user;
     std::vector<std::string> password;
-    attackerProfile(const Event& event);
+    attackerProfile(const Event& Event);
 };
 
 struct attacker
 {
     attackerProfile profile;
     slidingWindow window;
-    attacker(const Event& event, time_t windowSize);
+    attacker(const Event& Event, time_t WindowSize);
 };
 
 
-bool processEvents(const Event& event, std::unordered_map<std::string, attacker>& Profile, time_t windowSize, detectionEngine &Engine);
+bool processEvents(const Event& Event, std::unordered_map<std::string, attacker>& Profile, time_t WindowSize, detectionEngine &Engine, Alert& Alert);
+
 #endif
