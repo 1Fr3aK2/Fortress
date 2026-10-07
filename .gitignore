@@ -1,3 +1,4 @@
 logs/
 attacker/
 docker-compose.test.yml
+*.o
