@@ -6,7 +6,7 @@ printf "║         %s         ║\n" "$(date -u '+%Y-%m-%d %H:%M UTC')"
 echo "╚══════════════════════════════════════╝"
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-FILE="$SCRIPT_DIR/../logs/stats.json"
+FILE="$SCRIPT_DIR/../logs/logs/stats.json"
 
 TATTEMPTS=$(grep '"total_attempts"' "$FILE" | sed 's/.*: \([0-9]*\).*/\1/')
 L1H=$(grep '"attempts_last_1h"' "$FILE" | sed 's/.*: \([0-9]*\).*/\1/')
