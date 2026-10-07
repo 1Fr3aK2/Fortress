@@ -49,7 +49,7 @@ bool processEvents(const Event& Event, std::unordered_map<std::string, attacker>
         it->second.window.addTimestamp(Event.timestamp);
     }
     size_t Occurrences = it->second.window.getOccurrences();
-    if (Engine.checkBruteForce(Occurrences))
+    if (Engine.checkBruteForce(Event.srcIp, Occurrences))
         Alert = buildAlert(Event.timestamp, it->first, it->second.window.WindowSize, Occurrences);
     return true;
 }
