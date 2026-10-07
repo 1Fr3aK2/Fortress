@@ -279,7 +279,7 @@ volumes:
 **2. Protocolos de rede**
 - Como funciona um handshake SSH (RFC 4253) — só a leitura é suficiente
 - HTTP/1.1 já sabes — aprender `Transfer-Encoding: chunked` e SSE
-- FTP state machine (RFC 959) — é simples, ~15 comandos básicos
+- FTP alertSeverity machine (RFC 959) — é simples, ~15 comandos básicos
 
 **3. Estruturas de dados para análise**
 - Hash maps em C++ (`std::unordered_map`) — já provavelmente sabes
@@ -333,7 +333,7 @@ O IRC ensinaria gestão de estado de múltiplos clientes em simultâneo. Para o 
 **O que aprender:**
 - `epoll_wait` — gerir centenas de conexões sem uma thread por cliente
 - Event loop — o padrão central de qualquer servidor de alta performance
-- State machine por conexão — cada cliente SSH/FTP está num estado diferente
+- alertSeverity machine por conexão — cada cliente SSH/FTP está num estado diferente
 
 ```c
 // Padrão básico de event loop com epoll
@@ -441,7 +441,7 @@ fortress/
 ### Fase 2 — Honeypot Core (Semanas 3-5)
 - [ ] SSH honeypot: banner + accept credentials + log
 - [ ] HTTP honeypot: rotas falsas + log de payloads
-- [ ] FTP honeypot: state machine básica
+- [ ] FTP honeypot: alertSeverity machine básica
 - [ ] Testar com Nmap (`nmap -sV localhost`) e verificar que parece real
 
 ### Fase 3 — Logger & Infrastructure (Semanas 6-7)
@@ -507,7 +507,7 @@ curl -N https://localhost:443/api/stream
 **Skills demonstradas:**
 - C / C++ / Shell / Docker / Docker Compose
 - Network programming (TCP sockets, epoll, TLS/OpenSSL)
-- Protocol implementation (SSH banners, HTTP/1.1, FTP state machine)
+- Protocol implementation (SSH banners, HTTP/1.1, FTP alertSeverity machine)
 - Security concepts (honeypots, IDS, brute force detection, threat intelligence)
 - Linux hardening (capabilities, seccomp, namespaces)
 - Real-time data streaming (SSE)
