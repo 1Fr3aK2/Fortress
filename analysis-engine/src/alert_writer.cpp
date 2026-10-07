@@ -36,12 +36,12 @@ bool alertWriter::writeAlert(const Alert& Alert)
     return File.good();
 }
 
-Alert buildAlert(time_t Timestamp, const std::string& Ip, time_t Windowsize, size_t Total)
+Alert buildAlert(time_t Timestamp, const std::string& Ip, time_t Windowsize, size_t Total, alertSeverity alertSeverity)
 {
     Alert Alert(Timestamp, Ip, Total);
     Alert.type = "brute_force";
     Alert.severity = "Warning";
-    if (Total >= BRUTE_FORCE_CRITICAL_THRESHOLD)
+    if (alertSeverity == CRITICAL)
         Alert.severity = "Critical";
     Alert.message = std::to_string(Total) + " attempts in " + std::to_string(Windowsize) + " seconds";
     return Alert;    

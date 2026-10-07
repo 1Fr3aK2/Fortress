@@ -7,7 +7,7 @@
 #define BRUTE_FORCE_THRESHOLD 5
 #define BRUTE_FORCE_CRITICAL_THRESHOLD 20
 
-enum State
+enum alertSeverity
 {
     NONE,
     WARNING,
@@ -17,11 +17,11 @@ enum State
 class detectionEngine
 {
     private:
-        std::map<std::string, State> attackerStates;
+        std::map<std::string, alertSeverity> attackerAlert;
     public:
         detectionEngine();
         ~detectionEngine();
-        State checkBruteForce(const std::string& Ip, size_t Occurrences);
+        alertSeverity checkBruteForce(const std::string& Ip, size_t Occurrences);
 };
 
 

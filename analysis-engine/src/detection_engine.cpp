@@ -6,21 +6,21 @@ detectionEngine::detectionEngine(){
 detectionEngine::~detectionEngine(){
 }
 
-State detectionEngine::checkBruteForce(const std::string& Ip, size_t Occurrences)
+alertSeverity detectionEngine::checkBruteForce(const std::string& Ip, size_t Occurrences)
 {
     if (Occurrences < BRUTE_FORCE_THRESHOLD)
-        attackerStates[Ip] = NONE;
+        attackerAlert[Ip] = NONE;
     else if (Occurrences >= BRUTE_FORCE_CRITICAL_THRESHOLD)
     {
-        if (attackerStates[Ip] == CRITICAL)
+        if (attackerAlert[Ip] == CRITICAL)
             return NONE;
-        attackerStates[Ip] = CRITICAL;
+        attackerAlert[Ip] = CRITICAL;
     }
     else if (Occurrences >= BRUTE_FORCE_THRESHOLD)
     {
-        if (attackerStates[Ip] == WARNING)
+        if (attackerAlert[Ip] == WARNING)
             return NONE;
-        attackerStates[Ip] = WARNING;
+        attackerAlert[Ip] = WARNING;
     }
-    return attackerStates[Ip];
+    return attackerAlert[Ip];
 }
