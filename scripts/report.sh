@@ -1,12 +1,26 @@
 #!/bin/bash
+VOLUME="fortress_logs"
+
+if ! docker volume inspect "$VOLUME" >/dev/null 2>&1; then
+    echo "Volume $VOLUME doesn't exist. Run 'make up' first." >&2
+    exit 1
+fi
+
+FILE=$(mktemp)
+trap 'rm -f "$FILE"' EXIT
+
+if ! docker run --rm -v "$VOLUME":/data:ro alpine cat /data/stats.json > "$FILE" 2>/dev/null \
+    || [ ! -s "$FILE" ]; then
+    echo "It wasn't possible to read stats.json from volume $VOLUME (still empty?)." >&2
+    exit 1
+fi
+
 
 echo "╔══════════════════════════════════════╗"
 echo "║        FORTRESS — Daily Report       ║"
 printf "║         %s         ║\n" "$(date -u '+%Y-%m-%d %H:%M UTC')"
 echo "╚══════════════════════════════════════╝"
 
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-FILE="$SCRIPT_DIR/../logs/logs/stats.json"
 
 TATTEMPTS=$(grep '"total_attempts"' "$FILE" | sed 's/.*: \([0-9]*\).*/\1/')
 L1H=$(grep '"attempts_last_1h"' "$FILE" | sed 's/.*: \([0-9]*\).*/\1/')
