@@ -1,16 +1,11 @@
 COMPOSE = docker compose -f ./docker-compose.yml
-VOLUMES = ./logs
-SERVICES = honeypot logger analyser
 
 all: clean build up
 	@echo "Fortress started!"
 
 prep:
-	@echo "Building volumes directories..."
-	mkdir -p $(VOLUMES)
-	chmod 777 $(VOLUMES)
 	@ssh-keygen -f "$(HOME)/.ssh/known_hosts" -R "[localhost]:2222" 2>/dev/null || true
-	
+
 build: prep
 	@echo "Building images..."
 	$(COMPOSE) build
@@ -21,28 +16,21 @@ up:
 
 down:
 	@echo "Stopping and removing containers..."
-	$(COMPOSE) down -v
+	$(COMPOSE) down
 
 clean:
 	@echo "Cleaning Docker..."
-	@$(MAKE) -C ./honeypot clean --no-print-directory > /dev/null     
-	@$(MAKE) -C ./logger clean --no-print-directory > /dev/null     
+	@$(MAKE) -C ./honeypot clean --no-print-directory > /dev/null
+	@$(MAKE) -C ./logger clean --no-print-directory > /dev/null
 	@$(MAKE) -C ./analysis-engine clean --no-print-directory > /dev/null
 	$(COMPOSE) down -v
-	docker system prune -f
-	sudo rm -rf ./logs
 
 fclean:
-	@echo "Full cleaning Docker..."
-	@$(MAKE) -C ./honeypot fclean --no-print-directory > /dev/null     
-	@$(MAKE) -C ./logger fclean --no-print-directory > /dev/null     
+	@echo "Full cleaning Fortress..."
+	@$(MAKE) -C ./honeypot fclean --no-print-directory > /dev/null
+	@$(MAKE) -C ./logger fclean --no-print-directory > /dev/null
 	@$(MAKE) -C ./analysis-engine fclean --no-print-directory > /dev/null
-	-docker stop $$(docker ps -qa)
-	-docker rm $$(docker ps -qa)
-	-docker rmi -f $$(docker images -qa)
-	-docker volume rm $$(docker volume ls -q)
-	-docker network rm $$(docker network ls -q) 2>/dev/null
-	sudo rm -rf ./logs
+	$(COMPOSE) down -v --rmi all --remove-orphans
 
 logs:
 	@echo "Check specific service logs (ex: make logs SERVICE=honeypot)"
@@ -55,4 +43,4 @@ exec:
 re: clean build up
 	@echo "Restarting all the containers..."
 
-.PHONY: all build up down clean fclean logs exec re prep
+.PHONY: all prep build up down clean fclean logs exec re

@@ -1,35 +1,25 @@
+name: fortress
 services:
-
   honeypot:
     container_name: honeypot
-
     build:
       context: ./honeypot
       dockerfile: Dockerfile
-
     image: honeypot:honeypot
-
     ports:
       - "2222:2222"
-
     networks:
       - fortress
-
     volumes:
-      - ./logs/events:/var/log/fortress/events
-
+      - events:/var/log/fortress/events
     cap_drop:
       - ALL
     cap_add:
       - NET_BIND_SERVICE
-
     mem_limit: 256m
     cpus: 0.50
-
     restart: unless-stopped
-
     read_only: true
-
     tmpfs:
       - /tmp
       - /run
@@ -37,65 +27,51 @@ services:
 
   logger:
     container_name: logger
-
     build:
       context: ./logger
       dockerfile: Dockerfile
-
     image: logger:logger
-
     networks:
       - fortress
-
     volumes:
-      - ./logs/events:/var/log/fortress/events:ro
-      - ./logs/logs:/var/log/fortress/logs
-
+      - events:/var/log/fortress/events:ro
+      - logs:/var/log/fortress/logs
     mem_limit: 256m
     cpus: 0.50
-
     restart: unless-stopped
-
     read_only: true
-
     tmpfs:
       - /tmp
       - /run
-
     depends_on:
       - honeypot
 
 
   analyser:
     container_name: analyser
-
     build:
       context: ./analysis-engine
       dockerfile: Dockerfile
-
     image: analyser:analyser
-
     networks:
       - fortress
-
     volumes:
-      - ./logs/events:/var/log/fortress/events:ro
-      - ./logs/alerts:/var/log/fortress/alerts
-
+      - events:/var/log/fortress/events:ro
+      - alerts:/var/log/fortress/alerts
     mem_limit: 256m
     cpus: 0.50
-
     restart: unless-stopped
-
     read_only: true
-
     tmpfs:
       - /tmp
       - /run
-
     depends_on:
       - honeypot
 
+volumes:
+  events:
+  logs:
+  alerts:
 
 networks:
   fortress:
