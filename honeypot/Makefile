@@ -1,4 +1,4 @@
-NAME = honeypot
+NAME = Honeypot
 CC = cc
 CFLAGS = -Wall -Wextra -Werror -g -I./includes -Wno-deprecated-declarations
 
