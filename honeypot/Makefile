@@ -3,6 +3,7 @@ CC = cc
 CFLAGS = -Wall -Wextra -Werror -g -I./includes -Wno-deprecated-declarations
 
 SRCS = \
+	src/event_sender.c \
 	src/logger.c \
 	src/main.c \
 	src/ssh_trap.c \

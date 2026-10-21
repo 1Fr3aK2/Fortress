@@ -1,6 +1,5 @@
 #include <logger.h>
-
-#define EVENT_MAX 1400
+#include <event_sender.h>
 
 #define F_USER  32
 #define F_PASS  96
@@ -80,7 +79,7 @@ bool log_event(t_client *client, const char *user, const char *password)
         ft_putstr_fd("log_event: event too large\n", 2);
         return (false);
     }
-   /*  event_send(buff, (size_t)len); */      /* commit 2 */
+    event_send(buff, (size_t)len);
     fd = open("/var/log/fortress/events/events.json", O_WRONLY | O_CREAT | O_APPEND, 0644);
     if (fd == -1)
     {
