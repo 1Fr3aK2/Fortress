@@ -34,19 +34,12 @@ echo -e "TOP PASSWORDS:\n"
 
 i=1
 
-grep '"password"' "$FILE" | \
-sed 's/.*"password": "\([^"]*\)".*/\1/' | \
-while IFS= read -r password
+grep '"password"' "$FILE" | head -n 10 | \
+sed 's/.*"password": "\(\(\\.\|[^"\\]\)*\)", "count": \([0-9]*\).*/\1\t\3/' | \
+while IFS=$'\t' read -r password count
 do
-    count=$(grep "\"password\": \"$password\"" "$FILE" | \
-            grep '"count"' | \
-            sed 's/.*: \([0-9]*\).*/\1/')
-
     printf "%2d. %-20s (%s attempts)\n" "$i" "$password" "$count"
-
     i=$((i + 1))
-
-    [ "$i" -gt 10 ] && break
 done
 
 echo -e "\nTOP IPs:\n"
