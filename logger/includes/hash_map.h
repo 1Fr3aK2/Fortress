@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <../libraries/libft/libft.h>
 
+#define KEY_MAX 640     /* 96 bytes * 6 (\u00NN) = 576, com folga */
 
 typedef struct s_entry
 {

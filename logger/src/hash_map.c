@@ -45,10 +45,10 @@ char *extract_key(char *line)
 
 char *extract_value(char *line)
 {
-    char *key;
-    char *start;
-    char *end;
-    size_t len;
+    char    *start;
+    char    *end;
+    char    *value;
+    size_t  len;
 
     start = ft_strchr(line, ':');
     if (!start)
@@ -57,15 +57,21 @@ char *extract_value(char *line)
     if (!start)
         return (NULL);
     start++;
-    end = ft_strchr(start, '"');
-    if (!end)
-        return (NULL);
+    end = start;
+    while (*end && *end != '"')
+    {
+        if (*end == '\\' && end[1])
+            end++;              /* barra + caractere seguinte = uma unidade */
+        end++;
+    }
+    if (*end != '"')
+        return (NULL);          /* sem aspa de fecho: linha mal formada */
     len = end - start;
-    key = (char *)malloc(len + 1);
-    if (!key)
+    value = (char *)malloc(len + 1);
+    if (!value)
         return (NULL);
-    ft_strlcpy(key, start, len + 1);
-    return (key);
+    ft_strlcpy(value, start, len + 1);
+    return (value);
 }
 
 void parse_line(char *line, t_entry *bucket)
@@ -75,7 +81,10 @@ void parse_line(char *line, t_entry *bucket)
     value = extract_value(line);
     if (!value)
         return ;
-    ft_strlcpy(bucket->key, value, sizeof(bucket->key));
+    if (ft_strlen(value) >= sizeof(bucket->key))
+        ft_strlcpy(bucket->key, "(too long)", sizeof(bucket->key));
+    else
+        ft_strlcpy(bucket->key, value, sizeof(bucket->key));
     free(value);
 }
 
