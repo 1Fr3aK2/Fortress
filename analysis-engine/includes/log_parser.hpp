@@ -16,9 +16,12 @@ enum parseResult
 class logParser
 {
     private:
+        std::string path;
         std::ifstream file;
-        bool parse(const std::string& Line, Event& Event);
-        std::string parseLine(const std::string& Line, const std::string& Key);
+        Event current;
+        bool inEvent;
+        bool bad;
+        bool parse(const std::string& Line, Event& ev);
     public:
         logParser(const std::string& Path);
         ~logParser();

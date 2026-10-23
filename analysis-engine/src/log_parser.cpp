@@ -1,16 +1,12 @@
 #include <event.hpp>
 #include <log_parser.hpp>
-#include <sstream>
+#include <cstdlib>
 #include <ctime>
 #include <iostream>
 
-logParser::logParser(const std::string& Path) : file(Path.c_str())
-{    
-    if (!file.is_open())
-    {
-        std::cerr << "Error: error opening the file\n";
-        return ;
-    }
+logParser::logParser(const std::string& Path)
+    : path(Path), file(Path.c_str()), current(), inEvent(false), bad(false)
+{
 }
 
 logParser::~logParser()
@@ -19,109 +15,118 @@ logParser::~logParser()
         file.close();
 }
 
-
-bool logParser::parse(const std::string& Line, Event& Event)
+// Aceita só linhas na forma   \t"chave": "valor"   (com vírgula opcional).
+static bool splitField(const std::string& line, std::string& key, std::string& value)
 {
-    std::string Value;
+    size_t kend;
+    size_t start;
+    size_t i;
 
-    if (Line.find("\"ip\"") != std::string::npos)
+    if (line.size() < 2 || line[0] != '\t' || line[1] != '"')
+        return false;
+    kend = line.find('"', 2);
+    if (kend == std::string::npos || line.compare(kend + 1, 3, ": \"") != 0)
+        return false;
+    key = line.substr(2, kend - 2);
+    start = kend + 4;
+    i = start;
+    while (i < line.size() && line[i] != '"')
     {
-        Value = parseLine(Line, "ip");
-        if (Value.empty())
-            return false;
-        Event.srcIp = Value;
+        if (line[i] == '\\')
+            i++;                    // barra + caractere seguinte = uma unidade
+        i++;
     }
-    if (Line.find("\"timestamp\"") != std::string::npos)
-    {
-        Value = parseLine(Line, "timestamp");
-        if (Value.empty())
-            return false;
-        std::tm tm = {};
-        if (strptime(Value.c_str(), "%Y-%m-%dT%H:%M:%SZ", &tm) == NULL)
-            return false;
-        Event.timestamp = timegm(&tm);
-    }
-    if (Line.find("\"port\"") != std::string::npos)
-    {
-        Value = parseLine(Line, "port");
-        if (Value.empty())
-            return false;
-        int port;
-        std::stringstream ss(Value);
-        ss >> port;
-        Event.port = port;
-    }
-    if (Line.find("\"client_version\"") != std::string::npos)
-    {
-        Value = parseLine(Line, "client_version");
-        if (Value.empty())
-            return false;
-        Event.clientVersion = Value;
-    }
-    if (Line.find("\"user\"") != std::string::npos)
-    {
-        Value = parseLine(Line, "user");
-        if (Value.empty())
-            return false;
-        Event.user = Value;
-    }
-    if (Line.find("\"password\"") != std::string::npos)
-    {
-        Value = parseLine(Line, "password");
-        if (Value.empty())
-            return false;
-        Event.password = Value;
-    }
-    return true;
+    if (i >= line.size())
+        return false;               // sem aspa de fecho
+    value = line.substr(start, i - start);
+    std::string tail = line.substr(i + 1);
+    return tail.empty() || tail == ",";
 }
 
-std::string logParser::parseLine(const std::string& Line, const std::string &Key)
+bool logParser::parse(const std::string& Line, Event& ev)
 {
-    std::string Value;
-    size_t Pos;
-    size_t Ddots = Line.find(":");
-    if (Ddots == std::string::npos)
-        return "";
-    Pos = Line.find(Key);
-    if (Pos != std::string::npos)
+    std::string key;
+    std::string value;
+
+    if (!splitField(Line, key, value))
+        return false;
+    if (key == "ip")
+        ev.srcIp = value;
+    else if (key == "timestamp")
     {
-        size_t start = Ddots + 3;
-        size_t end = Line.find("\"", start);
-        if (end == std::string::npos)
-            return "";
-        Value = Line.substr(start , end - start);
-        if (Value.empty())
-            return "";
+        std::tm tm = {};
+        const char *end = strptime(value.c_str(), "%Y-%m-%dT%H:%M:%SZ", &tm);
+        if (end == NULL || *end != '\0')
+            return false;
+        ev.timestamp = timegm(&tm);
     }
-    return Value;
+    else if (key == "port")
+    {
+        char *end;
+        long port = strtol(value.c_str(), &end, 10);
+        if (value.empty() || *end != '\0' || port < 0 || port > 65535)
+            return false;
+        ev.port = static_cast<uint16_t>(port);
+    }
+    else if (key == "client_version")
+        ev.clientVersion = value;
+    else if (key == "user")
+        ev.user = value;
+    else if (key == "password")
+        ev.password = value;
+    // chaves desconhecidas (como received_at) são ignoradas
+    return true;
 }
 
 parseResult logParser::nextEvent(Event &event)
 {
     std::string line;
-    Event e;
-    while (std::getline(file, line))
+    std::streampos pos;
+
+    if (!file.is_open())
     {
-        if (line.find("{") != std::string::npos)
-            e = Event();
-        else if (line.find("}") != std::string::npos)
+        // o ficheiro pode ainda não existir (o logger cria-o): tenta outra vez
+        file.clear();
+        file.open(path.c_str());
+        if (!file.is_open())
+            return NO_EVENT;
+    }
+    while (true)
+    {
+        pos = file.tellg();
+        if (!std::getline(file, line))
+            break ;
+        if (file.eof())
         {
-            event = e;
-            return EVENT_READ;
+            // última linha sem '\n': ainda está a ser escrita, volta ao início dela
+            file.clear();
+            file.seekg(pos);
+            return NO_EVENT;
         }
-        else
+        if (line == "{")
         {
-            if (!parse(line, e))
+            current = Event();
+            inEvent = true;
+            bad = false;
+        }
+        else if (line == "}")
+        {
+            bool ok = inEvent && !bad && !current.srcIp.empty();
+            inEvent = false;
+            if (ok)
             {
-                std::cerr << "Error doing the parsing of the file\n";
-                return PARSE_ERROR;
+                event = current;
+                return EVENT_READ;
             }
+            std::cerr << "Skipping malformed event\n";
         }
+        else if (inEvent && !bad && !parse(line, current))
+            bad = true;
     }
     if (file.eof())
     {
         file.clear();
         return NO_EVENT;
     }
-    return PARSE_ERROR;    
+    return PARSE_ERROR;             // só para erros reais de leitura
 }
