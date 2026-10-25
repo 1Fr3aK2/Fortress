@@ -5,22 +5,33 @@
 #include <alert_writer.hpp>
 #include <unordered_map>
 #include <iostream>
+#include <csignal>
 #include <unistd.h>
+
+static volatile sig_atomic_t g_stop = 0;
+
+static void onSignal(int)
+{
+    g_stop = 1;
+}
 
 int main()
 {
+    std::signal(SIGTERM, onSignal);
+    std::signal(SIGINT, onSignal);
+
     std::unordered_map<std::string, attacker> Profile;
     detectionEngine Engine;
     alertWriter Writer("/var/log/fortress/alerts/alerts.json");
-    
+
     logParser parser("/var/log/fortress/events/events.json");
     Event e;
-    
+
     const time_t windowSize = 60;
-    while(true)
+    while (!g_stop)
     {
-        parseResult result;
-        while ((result = parser.nextEvent(e)) == EVENT_READ)
+        parseResult result = NO_EVENT;
+        while (!g_stop && (result = parser.nextEvent(e)) == EVENT_READ)
         {
             Alert alert(0, "", 0);
             if (!processEvents(e, Profile, windowSize, Engine, alert))
@@ -42,7 +53,8 @@ int main()
             std::cerr << "Error reading events\n";
             return 1;
         }
-        sleep(60);
+        for (int i = 0; i < 60 && !g_stop; i++)
+            sleep(1);
     }
     return 0;
 }
