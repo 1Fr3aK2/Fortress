@@ -1,30 +1,27 @@
 #!/bin/bash
-# Testa a validação de eventos no logger (passo 3).
-
+# Testa a validação de eventos no logger (passos 3 e 4).
 shopt -s lastpipe
 
-NET="${NET:-fortress_fortress}"
+NET="${NET:-fortress_ingest}"
 
 send() { docker run --rm -i --network "$NET" alpine nc -u -w1 logger 5140; }
 mk() { printf '{\n\t"timestamp": "%s",\n\t"ip": "%s",\n\t"port": "%s",\n\t"user": "%s",\n\t"password": "%s",\n\t"client_version": "%s"\n}\n' "$@"; }
-count() { docker logs logger 2>&1 | grep -c "\[ingest\] $1"; }
+lines() { docker exec logger wc -l /var/log/fortress/events/events.json | awk '{print $1}'; }
 
 pass=0
 fail=0
 
 check() {   # check <accepted|rejected> <descrição>, com o evento no stdin
-    local exp="$1" desc="$2" a0 r0 a1 r1 got
-    a0=$(count accepted); r0=$(count rejected)
+    local exp="$1" desc="$2" l0 l1 got
+    l0=$(lines)
     send
     sleep 0.5
-    a1=$(count accepted); r1=$(count rejected)
-    if [ $((a1 - a0)) -eq 1 ] && [ $((r1 - r0)) -eq 0 ]; then
-        got=accepted
-    elif [ $((r1 - r0)) -eq 1 ] && [ $((a1 - a0)) -eq 0 ]; then
-        got=rejected
-    else
-        got="inesperado (+$((a1 - a0)) accepted, +$((r1 - r0)) rejected)"
-    fi
+    l1=$(lines)
+    case $((l1 - l0)) in
+        9) got=accepted ;;
+        0) got=rejected ;;
+        *) got="inesperado (+$((l1 - l0)) linhas)" ;;
+    esac
     if [ "$got" = "$exp" ]; then
         pass=$((pass + 1)); printf 'PASS  %-9s %s\n' "$exp" "$desc"
     else
