@@ -6,6 +6,7 @@ SRCS = \
 	src/hash_map.c \
 	src/main.c \
 	src/stats_writer.c \
+	src/ingest.c \
 	src/algorithm/heap_sort.c \
 
 OBJ_DIR = obj

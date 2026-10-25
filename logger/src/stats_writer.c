@@ -25,7 +25,7 @@ void parse_file(int fd, t_hashmap *password_map,t_hashmap *ip_map, t_stats *stat
 
     while((line = get_next_line(fd)))
     {
-        if (ft_strchr(line, '{'))
+        if (line[0] == '{')
             ft_bzero(&temp, sizeof(temp));
         else
         {

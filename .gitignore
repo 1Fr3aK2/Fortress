@@ -2,3 +2,8 @@ logs/
 attacker/
 docker-compose.test.yml
 *.o
+backup/
+
+# Generated binaries and static libraries
+logger/Logger
+logger/libraries/libft/libft.a

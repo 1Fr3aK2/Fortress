@@ -24,12 +24,11 @@ RUN apt-get update \
     && useradd --system --uid 10003 --gid 10003 \
         --no-create-home --shell /usr/sbin/nologin honeypot \
     && mkdir -p /etc/fortress/keys \
-    && mkdir -p /var/log/fortress/events \
     && ssh-keygen -t rsa -b 2048 \
         -f /etc/fortress/keys/ssh_host_rsa_key \
         -N "" \
         -q \
-    && chown -R honeypot:honeypot /etc/fortress/keys /var/log/fortress/events
+    && chown -R honeypot:honeypot /etc/fortress/keys
 
 COPY --from=builder \
     /fortress/honeypot/Honeypot \

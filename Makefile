@@ -1,6 +1,6 @@
 COMPOSE = docker compose -f ./docker-compose.yml
 
-all: clean build up
+all: build up
 	@echo "Fortress started!"
 
 prep:
@@ -40,7 +40,7 @@ exec:
 	@echo "Entering on the container (ex: make exec SERVICE=honeypot)"
 	$(COMPOSE) exec $(SERVICE) sh
 
-re: clean build up
+re: build up
 	@echo "Restarting all the containers..."
 
 .PHONY: all prep build up down clean fclean logs exec re

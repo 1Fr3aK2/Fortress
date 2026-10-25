@@ -18,9 +18,9 @@ FROM debian:oldstable AS runtime
 RUN groupadd --system --gid 10002 logger \
     && useradd --system --uid 10002 --gid 10002 \
         --no-create-home --shell /usr/sbin/nologin logger \
-    && mkdir -p /var/log/fortress/logs \
-    && chown logger:logger /var/log/fortress/logs
-    
+    && mkdir -p /var/log/fortress/logs /var/log/fortress/events \
+    && chown logger:logger /var/log/fortress/logs /var/log/fortress/events
+
 COPY --from=builder \
     /fortress/logger/Logger \
     /usr/local/bin/Logger
