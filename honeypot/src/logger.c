@@ -56,7 +56,6 @@ bool log_event(t_client *client, const char *user, const char *password)
     char        ep[F_PASS * 6 + 1];
     char        ev[F_VERS * 6 + 1];
     int         len;
-    int         fd;
     struct tm   *tm_info;
 
     tm_info = gmtime(&client->timestamp);
@@ -80,13 +79,5 @@ bool log_event(t_client *client, const char *user, const char *password)
         return (false);
     }
     event_send(buff, (size_t)len);
-    fd = open("/var/log/fortress/events/events.json", O_WRONLY | O_CREAT | O_APPEND, 0644);
-    if (fd == -1)
-    {
-        ft_putstr_fd("open() error\n", 2);
-        return (false);
-    }
-    write(fd, buff, (size_t)len);
-    close(fd);
     return (true);
 }

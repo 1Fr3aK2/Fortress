@@ -1,14 +1,17 @@
+#include "ingest.h"
 #include <arpa/inet.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <netinet/in.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
-#include <ingest.h>
 
 #define NFIELDS 6
+#define EVENTS_PATH "/var/log/fortress/events/events.json"
 
 typedef struct s_field
 {
@@ -23,18 +26,67 @@ static const char	*g_keys[NFIELDS] = {
 /* máximo de bytes originais por campo (antes do escape) */
 static const size_t	g_max[NFIELDS] = { 20, 15, 5, 32, 96, 64 };
 
+static int	g_store = -1;
+
+static void	warn_limited(const char *msg)
+{
+	static time_t	last;
+	time_t			now;
+
+	now = time(NULL);
+	if (now - last >= 5)
+	{
+		last = now;
+		fprintf(stderr, "[ingest] %s\n", msg);
+	}
+}
+
+static int	store_open(void)
+{
+	umask(022);
+	g_store = open(EVENTS_PATH, O_WRONLY | O_CREAT | O_APPEND | O_CLOEXEC, 0644);
+	if (g_store < 0)
+	{
+		perror("ingest: cannot open " EVENTS_PATH);
+		return (-1);
+	}
+	return (0);
+}
+
+static int	store_append(const char *buf, size_t len)
+{
+	ssize_t	w;
+
+	while (len > 0)
+	{
+		w = write(g_store, buf, len);
+		if (w < 0)
+		{
+			if (errno == EINTR)
+				continue ;
+			return (-1);
+		}
+		buf += w;
+		len -= (size_t)w;
+	}
+	return (0);
+}
+
 int	ingest_open(void)
 {
 	struct sockaddr_in	addr;
 	int					fd;
 
+	if (store_open() < 0)
+		return (-1);
 	fd = socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, 0);
 	if (fd < 0)
 	{
 		perror("ingest: socket");
+		close(g_store);
 		return (-1);
 	}
-	ft_memset(&addr, 0, sizeof(addr));
+	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
 	addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	addr.sin_port = htons(INGEST_PORT);
@@ -42,42 +94,28 @@ int	ingest_open(void)
 	{
 		perror("ingest: bind");
 		close(fd);
+		close(g_store);
 		return (-1);
 	}
 	return (fd);
 }
 
-static void	ingest_dump(const char *tag, const char *buf, ssize_t n)
+static int	is_digit(char c)
 {
-	ssize_t			i;
-	unsigned char	c;
-
-	fprintf(stderr, "[ingest] %s (%zd bytes): ", tag, n);
-	for (i = 0; i < n; i++)
-	{
-		c = (unsigned char)buf[i];
-		if (c == '\n')
-			fputs("\\n", stderr);
-		else if (c >= 0x20 && c < 0x7f)
-			fputc(c, stderr);
-		else
-			fprintf(stderr, "\\x%02x", c);
-	}
-	fputc('\n', stderr);
+	return (c >= '0' && c <= '9');
 }
-
 
 static int	is_hex(char c)
 {
-	return (ft_isdigit(c) || (c >= 'a' && c <= 'f'));
+	return (is_digit(c) || (c >= 'a' && c <= 'f'));
 }
 
 static int	expect(const char **p, const char *end, const char *lit)
 {
 	size_t	l;
 
-	l = ft_strlen(lit);
-	if ((size_t)(end - *p) < l || ft_memcmp(*p, lit, l) != 0)
+	l = strlen(lit);
+	if ((size_t)(end - *p) < l || memcmp(*p, lit, l) != 0)
 		return (0);
 	*p += l;
 	return (1);
@@ -148,7 +186,7 @@ static int	timestamp_ok(const t_field *f)
 		return (0);
 	for (i = 0; i < 20; i++)
 	{
-		if (pat[i] == 'd' ? !ft_isdigit(f->p[i]) : f->p[i] != pat[i])
+		if (pat[i] == 'd' ? !is_digit(f->p[i]) : f->p[i] != pat[i])
 			return (0);
 	}
 	return (1);
@@ -161,7 +199,7 @@ static int	ip_ok(const t_field *f)
 
 	if (f->len == 0 || f->len > 15)
 		return (0);
-	ft_memcpy(tmp, f->p, f->len);
+	memcpy(tmp, f->p, f->len);
 	tmp[f->len] = '\0';
 	return (inet_pton(AF_INET, tmp, &a) == 1);
 }
@@ -176,7 +214,7 @@ static int	port_ok(const t_field *f)
 	v = 0;
 	for (i = 0; i < f->len; i++)
 	{
-		if (!ft_isdigit(f->p[i]))
+		if (!is_digit(f->p[i]))
 			return (0);
 		v = v * 10 + (f->p[i] - '0');
 	}
@@ -223,27 +261,24 @@ void	ingest_handle(int fd)
 		return ;
 	}
 	if (n > INGEST_MAX)
-	{
-		ft_putendl_fd("[ingest] rejected: datagram too large", 2);
-		return ;
-	}
+		return (warn_limited("rejected: datagram too large"));
 	if (!ingest_parse(buf, (size_t)n, f) || !timestamp_ok(&f[0])
 		|| !ip_ok(&f[1]) || !port_ok(&f[2]))
-	{
-		fprintf(stderr, "[ingest] rejected: invalid event (%zd bytes)\n", n);
-		return ;
-	}
+		return (warn_limited("rejected: invalid event"));
 	len = ingest_format(out, sizeof(out), f);
 	if (len < 0 || (size_t)len >= sizeof(out))
-	{
-		ft_putendl_fd("[ingest] rejected: cannot format event", 2);
-		return ;
-	}
-	ingest_dump("accepted", out, len);
+		return (warn_limited("rejected: cannot format event"));
+	if (store_append(out, (size_t)len) < 0)
+		warn_limited("cannot write event to events.json");
 }
 
 void	ingest_close(int fd)
 {
 	if (fd >= 0)
 		close(fd);
+	if (g_store >= 0)
+	{
+		close(g_store);
+		g_store = -1;
+	}
 }
