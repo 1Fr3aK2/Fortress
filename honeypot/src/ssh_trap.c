@@ -164,7 +164,7 @@ void run_Server(int sockfd, t_server *server)
 
     while (g_running)
     {
-        n = epoll_wait(server->epfd, events, MAX_EVENTS, -1);
+        n = epoll_wait(server->epfd, events, MAX_EVENTS, 1000);
         if (n == -1)
         {
             if (errno == EINTR)
@@ -182,4 +182,3 @@ void run_Server(int sockfd, t_server *server)
         }
     }
 }
-

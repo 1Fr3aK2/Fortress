@@ -3,10 +3,10 @@
 volatile sig_atomic_t g_running = 1;
 
 int main()
-{   
+{
     t_server *server;
     struct epoll_event ev;
-    
+
     struct sigaction sa_chld;
     struct sigaction sa_int;
 
@@ -14,7 +14,7 @@ int main()
     sa_chld.sa_handler = handle_SIGCHLD;
     sigemptyset(&sa_chld.sa_mask);
 
-    sa_chld.sa_flags = SA_RESTART | SA_NOCLDSTOP; 
+    sa_chld.sa_flags = SA_RESTART | SA_NOCLDSTOP;
     if (sigaction(SIGCHLD, &sa_chld, NULL) == -1)
         err("sigaction SIGCHLD error\n", NULL);
 
@@ -25,6 +25,8 @@ int main()
 
     if (sigaction(SIGINT, &sa_int, NULL) == -1)
         err("sigaction SIGINT error\n", NULL);
+    if (sigaction(SIGTERM, &sa_int, NULL) == -1)
+        err("sigaction SIGTERM error\n", NULL);
     server = ft_calloc(1, sizeof(t_server));
     if (!server)
         err(NULL, server);
@@ -43,7 +45,6 @@ int main()
         err("ssh_bind_new() error\n", server);
     ssh_bind_options_set(server->sshBind, SSH_BIND_OPTIONS_RSAKEY, "/etc/fortress/keys/ssh_host_rsa_key");
     run_Server(server->sockfd, server);
-
     close(server->sockfd);
     close(server->epfd);
     ssh_bind_free(server->sshBind);
